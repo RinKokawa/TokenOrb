@@ -1,0 +1,55 @@
+{
+  "name": "token-floating-ball",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lightweight cross-platform desktop widget for monitoring AI token usage.",
+  "author": "Token Floating Ball Contributors",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"tsc -p tsconfig.electron.json --watch --preserveWatchOutput\" \"wait-on http://127.0.0.1:44129 dist-electron/main.js && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:44129 electron .\"",
+    "build": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dist": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder",
+    "dist:win": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder --win nsis",
+    "dist:mac": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder --mac dmg"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "overrides": {
+    "@electron/get": "3.1.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "framer-motion": "^12.23.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^22.15.34",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^37.2.0",
+    "electron-builder": "26.15.7",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^6.0.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.36.0",
+    "vite": "^7.0.4",
+    "wait-on": "^8.0.3",
+    "zod": "^3.24.4"
+  }
+}
