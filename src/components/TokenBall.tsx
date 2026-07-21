@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
 import { useTokenStore } from '../store/tokenStore';
+import { getBalanceStroke, getBalanceTextClass } from '../lib/balanceColor';
+import { useT } from '../i18n';
 
 type TokenBallProps = {
   onOpen: () => void;
@@ -17,9 +19,12 @@ const circumference = 2 * Math.PI * radius;
 
 export const TokenBall = ({ onOpen }: TokenBallProps) => {
   const percentage = useTokenStore((state) => state.percentage);
+  const t = useT();
   const pointerState = useRef<PointerState | null>(null);
   const safePercentage = Math.min(Math.max(percentage, 0), 100);
   const dashOffset = circumference * (1 - safePercentage / 100);
+  const ringColor = getBalanceStroke(safePercentage);
+  const textColor = getBalanceTextClass(safePercentage);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>): void => {
     if (event.button !== 0) return;
@@ -54,7 +59,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
   return (
     <motion.button
       type="button"
-      aria-label={`Token balance ${safePercentage}% remaining`}
+      aria-label={t('ball.aria', { pct: safePercentage })}
       className="relative flex h-20 w-20 touch-none items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-2xl shadow-indigo-950/40 backdrop-blur-xl"
       animate={{ y: [0, -3, 0] }}
       transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
@@ -82,11 +87,11 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
           cy="40"
           r={radius}
           fill="none"
-          stroke="#818cf8"
+          stroke={ringColor}
           strokeLinecap="round"
           strokeWidth="4"
           strokeDasharray={circumference}
-          animate={{ strokeDashoffset: dashOffset }}
+          animate={{ stroke: ringColor, strokeDashoffset: dashOffset }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         />
       </svg>
@@ -95,7 +100,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
           <AnimatePresence initial={false} mode="popLayout">
             <motion.span
               key={safePercentage}
-              className="absolute"
+              className={`absolute ${textColor}`}
               initial={{ y: 16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -16, opacity: 0 }}
@@ -105,7 +110,9 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
             </motion.span>
           </AnimatePresence>
         </span>
-        <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-slate-300">TOKEN</span>
+        <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-slate-300">
+          {t('ball.label')}
+        </span>
       </span>
     </motion.button>
   );

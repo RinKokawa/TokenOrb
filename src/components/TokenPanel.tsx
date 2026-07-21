@@ -1,5 +1,11 @@
 import { motion } from 'framer-motion';
 import { useTokenStore } from '../store/tokenStore';
+import {
+  getBalanceRingBgClass,
+  getBalanceStroke,
+  getBalanceTextClass,
+} from '../lib/balanceColor';
+import { getLang, setLang, type Lang, useT } from '../i18n';
 
 type TokenPanelProps = {
   onClose: () => void;
@@ -24,24 +30,32 @@ const formatTimestamp = (timestamp: number | null): string => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-const statusMap: Record<
-  ReturnType<typeof useTokenStore.getState>['status'],
-  { label: string; dot: string }
-> = {
-  idle: { label: 'Idle', dot: 'bg-slate-400' },
-  loading: { label: 'Loading', dot: 'bg-amber-300' },
-  online: { label: 'API Online', dot: 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]' },
-  mock: { label: 'Mock Data', dot: 'bg-indigo-300' },
-  unauthorized: { label: 'Token Invalid', dot: 'bg-rose-400' },
-  offline: { label: 'Offline', dot: 'bg-amber-500' },
+type StatusKey = 'idle' | 'loading' | 'online' | 'mock' | 'unauthorized' | 'offline';
+
+const statusDotMap: Record<StatusKey, string> = {
+  idle: 'bg-slate-400',
+  loading: 'bg-amber-300',
+  online: 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]',
+  mock: 'bg-indigo-300',
+  unauthorized: 'bg-rose-400',
+  offline: 'bg-amber-500',
 };
+
+const langOptions: Lang[] = ['en', 'zh'];
 
 export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPanelProps) => {
   const { snapshot, percentage, total, isLoading, lastFetchedAt, status, error } = useTokenStore();
-  const statusInfo = statusMap[status];
+  const t = useT();
+  const statusKey = (status as StatusKey) ?? 'idle';
+  const statusDot = statusDotMap[statusKey] ?? statusDotMap.idle;
+  const statusLabel = t(`status.${statusKey}`);
   const primary = snapshot?.primary ?? null;
   const usedNumeric = Math.max(0, total - percentage);
   const weeklyUsed = primary?.weeklyUsedPercent ?? 0;
+  const ringColor = getBalanceStroke(percentage);
+  const ringBg = getBalanceRingBgClass(percentage);
+  const ringText = getBalanceTextClass(percentage);
+  const lang = getLang();
 
   return (
     <motion.section
@@ -53,15 +67,42 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
       <header className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-indigo-300">
-            Token Monitor
+            {t('panel.eyebrow')}
           </p>
-          <h1 className="light-text mt-1 text-xl font-semibold tracking-tight">Usage overview</h1>
+          <h1 className="light-text mt-1 text-xl font-semibold tracking-tight">
+            {t('panel.title')}
+          </h1>
         </div>
         <div className="flex items-center gap-1">
+          <div
+            role="group"
+            aria-label={t('panel.langToggle')}
+            className="flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5 text-[11px] font-medium"
+          >
+            {langOptions.map((option) => {
+              const isActive = lang === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={isActive}
+                  aria-label={t('panel.langToggle')}
+                  className={`min-w-[28px] rounded-md px-1.5 py-1 transition ${
+                    isActive
+                      ? 'bg-indigo-500 text-white shadow'
+                      : 'text-[var(--muted)] hover:text-white'
+                  }`}
+                  onClick={() => setLang(option)}
+                >
+                  {t(`panel.langShort.${option}`)}
+                </button>
+              );
+            })}
+          </div>
           <button
             type="button"
-            aria-label="Open settings"
-            title="Settings"
+            aria-label={t('panel.settings')}
+            title={t('panel.settings')}
             className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
             onClick={onSettings}
           >
@@ -69,8 +110,8 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
           </button>
           <button
             type="button"
-            aria-label="Close panel"
-            title="Collapse"
+            aria-label={t('panel.close')}
+            title={t('panel.close')}
             className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
             onClick={onClose}
           >
@@ -80,7 +121,7 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
       </header>
 
       <div className="mt-6 flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-indigo-500/15">
+        <div className={`relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full ${ringBg}`}>
           <svg
             className="absolute inset-0 h-full w-full -rotate-90"
             viewBox="0 0 64 64"
@@ -99,44 +140,47 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
               cy="32"
               r="25"
               fill="none"
-              stroke="#818cf8"
+              stroke={ringColor}
               strokeLinecap="round"
               strokeWidth="4"
               strokeDasharray={2 * Math.PI * 25}
-              animate={{ strokeDashoffset: 2 * Math.PI * 25 * (1 - percentage / 100) }}
+              animate={{
+                stroke: ringColor,
+                strokeDashoffset: 2 * Math.PI * 25 * (1 - percentage / 100),
+              }}
             />
           </svg>
-          <span className="light-text text-sm font-semibold">{percentage}%</span>
+          <span className={`text-sm font-semibold ${ringText}`}>{percentage}%</span>
         </div>
         <div>
-          <p className="text-xs text-[var(--muted)]">Remaining balance</p>
+          <p className="text-xs text-[var(--muted)]">{t('panel.remaining')}</p>
           <p className="light-text mt-1 text-2xl font-semibold tracking-tight">
             {formatNumber(percentage)}
           </p>
           <p className="mt-1 text-[11px] text-[var(--muted)]">
-            of {formatNumber(total)}% · model {primary?.model ?? '—'}
+            {t('panel.of', { total: formatNumber(total), model: primary?.model ?? '—' })}
           </p>
         </div>
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-          <p className="text-[11px] text-[var(--muted)]">Used (5h)</p>
+          <p className="text-[11px] text-[var(--muted)]">{t('panel.used5h')}</p>
           <p className="light-text mt-2 text-lg font-semibold">{formatNumber(usedNumeric)}%</p>
         </div>
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-          <p className="text-[11px] text-[var(--muted)]">Weekly used</p>
+          <p className="text-[11px] text-[var(--muted)]">{t('panel.weeklyUsed')}</p>
           <p className="light-text mt-2 text-lg font-semibold">{formatNumber(weeklyUsed)}%</p>
         </div>
       </div>
 
       <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 text-[11px] leading-relaxed">
         <div className="flex items-center justify-between">
-          <span className="text-[var(--muted)]">Last fetched</span>
+          <span className="text-[var(--muted)]">{t('panel.lastFetched')}</span>
           <span className="light-text font-medium">{formatTimestamp(lastFetchedAt)}</span>
         </div>
         <div className="mt-1 flex items-center justify-between">
-          <span className="text-[var(--muted)]">Source</span>
+          <span className="text-[var(--muted)]">{t('panel.source')}</span>
           <span className="light-text font-medium">{snapshot?.baseUrl ?? '—'}</span>
         </div>
         {error ? <p className="mt-2 text-rose-300">{error}</p> : null}
@@ -144,8 +188,8 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
 
       <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4">
         <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${statusInfo.dot}`} />
-          <span className="text-xs font-medium text-[var(--muted)]">{statusInfo.label}</span>
+          <span className={`h-2 w-2 rounded-full ${statusDot}`} />
+          <span className="text-xs font-medium text-[var(--muted)]">{statusLabel}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -153,7 +197,7 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
             className="rounded-lg px-3 py-2 text-xs font-medium text-[var(--muted)] transition hover:bg-white/10 hover:text-white"
             onClick={onHide}
           >
-            Hide
+            {t('panel.hide')}
           </button>
           <button
             type="button"
@@ -161,7 +205,7 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
             disabled={isLoading}
             onClick={onRefresh}
           >
-            {isLoading ? 'Refreshing' : 'Refresh'}
+            {isLoading ? t('panel.refreshing') : t('panel.refresh')}
           </button>
         </div>
       </div>
