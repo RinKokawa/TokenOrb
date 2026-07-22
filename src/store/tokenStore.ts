@@ -11,9 +11,11 @@ export interface TokenState extends TokenBalance {
   snapshot: TokenPlanSnapshot | null;
   status: TokenStatus;
   lastFetchedAt: number | null;
+  nextRefreshAt: number | null;
   error: string | null;
   isLoading: boolean;
   updateToken: () => Promise<void>;
+  setNextRefreshAt: (timestamp: number | null) => void;
 }
 
 const initialBalance: TokenBalance = {
@@ -28,6 +30,7 @@ export const useTokenStore = create<TokenState>((set) => ({
   snapshot: null,
   status: 'idle',
   lastFetchedAt: null,
+  nextRefreshAt: null,
   error: null,
   isLoading: false,
   updateToken: async () => {
@@ -59,4 +62,5 @@ export const useTokenStore = create<TokenState>((set) => ({
       set({ isLoading: false });
     }
   },
+  setNextRefreshAt: (timestamp) => set({ nextRefreshAt: timestamp }),
 }));

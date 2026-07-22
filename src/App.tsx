@@ -24,11 +24,13 @@ const App = () => {
   const updateToken = useTokenStore((state) => state.updateToken);
 
   useEffect(() => {
+    const setNextRefreshAt = useTokenStore.getState().setNextRefreshAt;
     const refresh = (): void => {
       void updateToken().catch(() => undefined);
     };
 
     refresh();
+    setNextRefreshAt(Date.now() + refreshInterval * 1_000);
     const timer = window.setInterval(refresh, refreshInterval * 1_000);
     return () => window.clearInterval(timer);
   }, [refreshInterval, updateToken]);
