@@ -60,60 +60,64 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
     <motion.button
       type="button"
       aria-label={t('ball.aria', { pct: safePercentage })}
-      className="relative flex h-20 w-20 touch-none items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white shadow-2xl shadow-indigo-950/40 backdrop-blur-xl"
-      animate={{ y: [0, -3, 0] }}
-      transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
-      whileTap={{ scale: 1.1 }}
+      className="relative flex h-24 w-24 touch-none appearance-none items-center justify-center border-none bg-transparent p-0 outline-none focus:outline-none"
+      whileTap={{ scale: 1.05 }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      <svg
-        className="absolute inset-0 h-full w-full -rotate-90"
-        viewBox="0 0 80 80"
-        aria-hidden="true"
+      <motion.div
+        className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white backdrop-blur-xl"
+        animate={{ y: [0, -3, 0] }}
+        transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
       >
-        <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.12)"
-          strokeWidth="4"
-        />
-        <motion.circle
-          cx="40"
-          cy="40"
-          r={radius}
-          fill="none"
-          stroke={ringColor}
-          strokeLinecap="round"
-          strokeWidth="4"
-          strokeDasharray={circumference}
-          animate={{ stroke: ringColor, strokeDashoffset: dashOffset }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-        />
-      </svg>
-      <span className="relative flex flex-col items-center leading-none">
-        <span className="relative inline-flex h-7 min-w-12 items-center justify-center overflow-hidden text-xl font-semibold tracking-tight">
-          <AnimatePresence initial={false} mode="popLayout">
-            <motion.span
-              key={safePercentage}
-              className={`absolute ${textColor}`}
-              initial={{ y: 16, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -16, opacity: 0 }}
-              transition={{ duration: 0.22 }}
-            >
-              {safePercentage}%
-            </motion.span>
-          </AnimatePresence>
+        <svg
+          className="absolute inset-0 h-full w-full -rotate-90"
+          viewBox="0 0 80 80"
+          aria-hidden="true"
+        >
+          <circle
+            cx="40"
+            cy="40"
+            r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.12)"
+            strokeWidth="4"
+          />
+          <motion.circle
+            cx="40"
+            cy="40"
+            r={radius}
+            fill="none"
+            stroke={ringColor}
+            strokeLinecap="round"
+            strokeWidth="4"
+            strokeDasharray={circumference}
+            animate={{ stroke: ringColor, strokeDashoffset: dashOffset }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+        </svg>
+        <span className="relative flex flex-col items-center leading-none">
+          <span className="relative inline-flex h-7 min-w-12 items-center justify-center overflow-hidden text-xl font-semibold tracking-tight">
+            <AnimatePresence initial={false} mode="popLayout">
+              <motion.span
+                key={safePercentage}
+                className={`absolute ${textColor}`}
+                initial={{ y: 16, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -16, opacity: 0 }}
+                transition={{ duration: 0.22 }}
+              >
+                {safePercentage}%
+              </motion.span>
+            </AnimatePresence>
+          </span>
+          <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-slate-300">
+            {t('ball.label')}
+          </span>
         </span>
-        <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-slate-300">
-          {t('ball.label')}
-        </span>
-      </span>
+      </motion.div>
     </motion.button>
   );
 };

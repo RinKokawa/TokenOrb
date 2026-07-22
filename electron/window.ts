@@ -6,9 +6,9 @@ type WindowDimensions = { width: number; height: number };
 export type WindowState = 'collapsed' | 'expanded' | 'settings';
 
 const dimensions: Record<WindowState, WindowDimensions> = {
-  collapsed: { width: 80, height: 80 },
-  expanded: { width: 320, height: 400 },
-  settings: { width: 320, height: 400 },
+  collapsed: { width: 96, height: 96 },
+  expanded: { width: 320, height: 500 },
+  settings: { width: 320, height: 580 },
 };
 
 let mainWindow: BrowserWindow | null = null;

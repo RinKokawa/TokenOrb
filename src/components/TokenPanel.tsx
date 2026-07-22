@@ -59,7 +59,7 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
 
   return (
     <motion.section
-      className="glass-panel flex h-[400px] w-[320px] flex-col overflow-hidden rounded-2xl p-5 text-slate-200"
+      className="glass-panel flex w-[320px] flex-col rounded-2xl p-5 text-slate-200"
       initial={{ opacity: 0, scale: 0.92, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
@@ -186,7 +186,7 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
         {error ? <p className="mt-2 text-rose-300">{error}</p> : null}
       </div>
 
-      <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4">
+      <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${statusDot}`} />
           <span className="text-xs font-medium text-[var(--muted)]">{statusLabel}</span>
