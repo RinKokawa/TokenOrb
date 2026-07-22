@@ -88,18 +88,21 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
   };
 
   return (
-    <motion.button
-      type="button"
-      aria-label={t('ball.aria', { pct: safePercentage })}
-      className="relative flex h-24 w-24 touch-none appearance-none items-center justify-center border-none bg-transparent p-0 outline-none focus:outline-none"
-      whileTap={{ scale: 1.05 }}
-      onPointerEnter={() => setIsHovered(true)}
-      onPointerLeave={() => setIsHovered(false)}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
+    <div
+      className="relative flex h-24 w-24 items-center justify-center"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      <motion.button
+        type="button"
+        aria-label={t('ball.aria', { pct: safePercentage })}
+        className="relative flex h-24 w-24 touch-none appearance-none items-center justify-center border-none bg-transparent p-0 outline-none focus:outline-none"
+        whileTap={{ scale: 1.05 }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
       <motion.div
         className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white backdrop-blur-xl"
         animate={{ y: [0, -3, 0] }}
@@ -151,6 +154,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
           </span>
         </span>
       </motion.div>
+      </motion.button>
       <AnimatePresence>
         {isHovered && nextRefreshAt && remainingMs !== null ? (
           <motion.div
@@ -177,6 +181,6 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </motion.button>
+    </div>
   );
 };
