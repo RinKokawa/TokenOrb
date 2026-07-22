@@ -11,7 +11,7 @@ type SettingsProps = {
 };
 
 const getStoredTheme = (): Theme => {
-  const storedTheme = window.localStorage.getItem('token-floating-ball:theme');
+  const storedTheme = window.localStorage.getItem('token-orb:theme');
   return storedTheme === 'light' ? 'light' : 'dark';
 };
 
@@ -25,11 +25,11 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem('token-floating-ball:theme', theme);
+    window.localStorage.setItem('token-orb:theme', theme);
   }, [theme]);
 
   const handleRefreshIntervalChange = (value: number): void => {
-    window.localStorage.setItem('token-floating-ball:refresh-interval', String(value));
+    window.localStorage.setItem('token-orb:refresh-interval', String(value));
     onRefreshIntervalChange(value);
   };
 
@@ -38,7 +38,7 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
   const statusLine = t(`settings.status.${status}`);
 
   return (
-    <section className="glass-panel flex h-[400px] w-[320px] flex-col overflow-hidden rounded-2xl p-5 text-slate-200">
+    <section className="glass-panel flex w-[320px] flex-col rounded-2xl p-5 text-slate-200">
       <header className="flex items-center gap-3">
         <button
           type="button"
@@ -58,7 +58,7 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
         </div>
       </header>
 
-      <div className="mt-7 space-y-5 overflow-y-auto pr-1">
+      <div className="mt-7 space-y-5">
         <div>
           <p className="light-text text-sm font-medium">{t('settings.minimax')}</p>
           <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">

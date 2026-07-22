@@ -19,7 +19,7 @@ const url = new URL('/backend/account/token_plan/remains_percent', baseUrl).toSt
 const headers = {
   Authorization: `Bearer ${token}`,
   Accept: 'application/json, text/plain, */*',
-  'User-Agent': 'token-floating-ball/0.1 (+electron)',
+  'User-Agent': 'token-orb/0.1 (+electron)',
 };
 if (groupId) headers['X-Group-Id'] = groupId;
 

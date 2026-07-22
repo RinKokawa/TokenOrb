@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 export type Lang = 'en' | 'zh';
 
-const STORAGE_KEY = 'token-floating-ball:lang';
+const STORAGE_KEY = 'token-orb:lang';
 
 type Dict = Record<string, string>;
 

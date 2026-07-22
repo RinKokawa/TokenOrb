@@ -1,9 +1,9 @@
 {
-  "name": "token-floating-ball",
+  "name": "token-orb",
   "version": "0.1.0",
   "private": true,
-  "description": "A lightweight cross-platform desktop widget for monitoring AI token usage.",
-  "author": "Token Floating Ball Contributors",
+  "description": "A lightweight, always-on-top desktop orb that shows your AI token balance in real time.",
+  "author": "TokenOrb Contributors",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"tsc -p tsconfig.electron.json --watch --preserveWatchOutput\" \"wait-on http://127.0.0.1:44129 dist-electron/main.js && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:44129 electron .\"",

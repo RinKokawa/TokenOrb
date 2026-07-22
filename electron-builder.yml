@@ -1,5 +1,5 @@
-appId: com.tokenfloatingball.app
-productName: Token Floating Ball
+appId: com.tokenorb.app
+productName: TokenOrb
 asar: true
 compression: normal
 files:
@@ -27,4 +27,4 @@ mac:
   icon: build/icon.png
   category: public.app-category.utilities
 dmg:
-  title: Token Floating Ball
+  title: TokenOrb

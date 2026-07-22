@@ -10,7 +10,7 @@ const defaultRefreshInterval = 30;
 const refreshOptions = [10, 30, 60, 300];
 
 const getStoredRefreshInterval = (): number => {
-  const value = Number(window.localStorage.getItem('token-floating-ball:refresh-interval'));
+  const value = Number(window.localStorage.getItem('token-orb:refresh-interval'));
   return refreshOptions.includes(value) ? value : defaultRefreshInterval;
 };
 
