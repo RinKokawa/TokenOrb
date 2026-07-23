@@ -59,6 +59,13 @@ const GROUP_COOKIE_NAME = 'minimax_group_id_v2';
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
+const UNIX_MILLISECONDS_THRESHOLD = 10_000_000_000;
+
+export const normalizeTimestamp = (value: unknown): number => {
+  if (!isFiniteNumber(value) || value <= 0) return 0;
+  return value < UNIX_MILLISECONDS_THRESHOLD ? value * 1_000 : value;
+};
+
 const parsePercent = (value: unknown): number => {
   if (typeof value === 'string') {
     const trimmed = value.trim();
@@ -84,7 +91,7 @@ const parseModel = (value: unknown): TokenPlanModel | null => {
     150,
     Math.max(0, parsePercent(raw.current_weekly_used_percent)),
   );
-  const resetAt = isFiniteNumber(raw.end_time) ? raw.end_time : 0;
+  const resetAt = normalizeTimestamp(raw.end_time);
 
   return {
     model: raw.model_name,
