@@ -11,11 +11,12 @@ export interface TokenState extends TokenBalance {
   snapshot: TokenPlanSnapshot | null;
   status: TokenStatus;
   lastFetchedAt: number | null;
-  nextRefreshAt: number | null;
+  quotaResetAt: number | null;
+  nextPollAt: number | null;
   error: string | null;
   isLoading: boolean;
   updateToken: () => Promise<void>;
-  setNextRefreshAt: (timestamp: number | null) => void;
+  setNextPollAt: (timestamp: number | null) => void;
 }
 
 const initialBalance: TokenBalance = {
@@ -30,7 +31,8 @@ export const useTokenStore = create<TokenState>((set) => ({
   snapshot: null,
   status: 'idle',
   lastFetchedAt: null,
-  nextRefreshAt: null,
+  quotaResetAt: null,
+  nextPollAt: null,
   error: null,
   isLoading: false,
   updateToken: async () => {
@@ -51,7 +53,7 @@ export const useTokenStore = create<TokenState>((set) => ({
         remaining,
         percentage,
         lastFetchedAt: snapshot.fetchedAt,
-        nextRefreshAt: primary?.resetAt ?? null,
+        quotaResetAt: primary?.resetAt || null,
         status: snapshot.baseUrl.startsWith('mock://') ? 'mock' : 'online',
       });
     } catch (error: unknown) {
@@ -63,5 +65,5 @@ export const useTokenStore = create<TokenState>((set) => ({
       set({ isLoading: false });
     }
   },
-  setNextRefreshAt: (timestamp) => set({ nextRefreshAt: timestamp }),
+  setNextPollAt: (timestamp) => set({ nextPollAt: timestamp }),
 }));

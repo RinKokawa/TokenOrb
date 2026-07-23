@@ -24,15 +24,23 @@ const App = () => {
   const updateToken = useTokenStore((state) => state.updateToken);
 
   useEffect(() => {
-    const setNextRefreshAt = useTokenStore.getState().setNextRefreshAt;
-    const refresh = (): void => {
-      void updateToken().catch(() => undefined);
+    const setNextPollAt = useTokenStore.getState().setNextPollAt;
+    const refresh = async (): Promise<void> => {
+      try {
+        await updateToken();
+      } catch {
+        // The store exposes the normalized error to the UI.
+      } finally {
+        setNextPollAt(Date.now() + refreshInterval * 1_000);
+      }
     };
 
-    refresh();
-    setNextRefreshAt(Date.now() + refreshInterval * 1_000);
-    const timer = window.setInterval(refresh, refreshInterval * 1_000);
-    return () => window.clearInterval(timer);
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), refreshInterval * 1_000);
+    return () => {
+      window.clearInterval(timer);
+      setNextPollAt(null);
+    };
   }, [refreshInterval, updateToken]);
 
   useEffect(() => {

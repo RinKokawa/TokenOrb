@@ -27,7 +27,8 @@ const formatNextRefreshClock = (timestamp: number | null): string => {
 
 export const TokenBall = ({ onOpen }: TokenBallProps) => {
   const percentage = useTokenStore((state) => state.percentage);
-  const nextRefreshAt = useTokenStore((state) => state.nextRefreshAt);
+  const quotaResetAt = useTokenStore((state) => state.quotaResetAt);
+  const nextPollAt = useTokenStore((state) => state.nextPollAt);
   const t = useT();
   const pointerState = useRef<PointerState | null>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -112,7 +113,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
         </svg>
         <span className="relative flex flex-col items-center leading-none">
           <AnimatePresence initial={false} mode="wait">
-            {isHovered && nextRefreshAt ? (
+            {isHovered && (quotaResetAt || nextPollAt) ? (
               <motion.span
                 key="refresh-info"
                 className="flex flex-col items-center"
@@ -122,7 +123,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
                 transition={{ duration: 0.18 }}
               >
                 <span className="font-mono text-base font-semibold text-white">
-                  {formatNextRefreshClock(nextRefreshAt)}
+                  {formatNextRefreshClock(quotaResetAt ?? nextPollAt)}
                 </span>
               </motion.span>
             ) : (
