@@ -51,6 +51,7 @@ export const useTokenStore = create<TokenState>((set) => ({
         remaining,
         percentage,
         lastFetchedAt: snapshot.fetchedAt,
+        nextRefreshAt: primary?.resetAt ?? null,
         status: snapshot.baseUrl.startsWith('mock://') ? 'mock' : 'online',
       });
     } catch (error: unknown) {
