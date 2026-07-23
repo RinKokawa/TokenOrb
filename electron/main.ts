@@ -10,6 +10,7 @@ import {
   setQuitting,
   setWindowState,
   showMainWindow,
+  stopWindowDrag,
 } from './window';
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -59,5 +60,6 @@ if (!hasSingleInstanceLock) {
   app.on('before-quit', () => {
     setQuitting(true);
     destroyTray();
+    stopWindowDrag();
   });
 }

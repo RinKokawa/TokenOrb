@@ -1,5 +1,20 @@
 import { BrowserWindow, screen } from 'electron';
 import path from 'node:path';
+import {
+  clampBoundsToWorkArea,
+  clampPointToWorkArea,
+  computeDragPosition,
+  type Point,
+  type Rectangle,
+  type Size,
+} from './window/geometry';
+import {
+  POSITION_SCHEMA_VERSION,
+  resolveRestoredPosition,
+  type DisplayInfo,
+  type PersistedPosition,
+} from './window/persistence';
+import { loadPersistedPositionFromDisk, writePersistedPositionToDisk } from './window/store';
 import type { WindowState } from './shared/token';
 
 export type { WindowState } from './shared/token';
@@ -17,49 +32,93 @@ const maxBounds: WindowDimensions = {
   height: Math.max(...Object.values(dimensions).map((d) => d.height)),
 };
 
+const EDGE_INSET = 24;
+
 let mainWindow: BrowserWindow | null = null;
 let currentState: WindowState = 'collapsed';
 let isQuitting = false;
 let dragTimer: ReturnType<typeof setInterval> | null = null;
 
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(Math.max(value, min), max);
+const computeFallbackPosition = (
+  size: WindowDimensions,
+): { x: number; y: number; displayId: number } => {
+  const primary = screen.getPrimaryDisplay();
+  return {
+    x: primary.workArea.x + primary.workArea.width - size.width - EDGE_INSET,
+    y: primary.workArea.y + primary.workArea.height - size.height - EDGE_INSET,
+    displayId: primary.id,
+  };
+};
+
+const collectDisplays = (): DisplayInfo[] =>
+  screen.getAllDisplays().map((display) => ({
+    id: display.id,
+    workArea: {
+      x: display.workArea.x,
+      y: display.workArea.y,
+      width: display.workArea.width,
+      height: display.workArea.height,
+    },
+  }));
+
+const resolveStartupPosition = (
+  size: WindowDimensions,
+): { x: number; y: number; displayId: number } => {
+  const saved = loadPersistedPositionFromDisk();
+  const fallback = computeFallbackPosition(size);
+  return resolveRestoredPosition(saved, collectDisplays(), size, fallback);
+};
 
 const keepInWorkArea = (window: BrowserWindow, width: number, height: number): void => {
   const workArea = screen.getDisplayMatching(window.getBounds()).workArea;
   const bounds = window.getBounds();
-  const x = clamp(bounds.x + bounds.width - width, workArea.x, workArea.x + workArea.width - width);
-  const y = clamp(
-    bounds.y + bounds.height - height,
-    workArea.y,
-    workArea.y + workArea.height - height,
+  const next = clampBoundsToWorkArea(
+    { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+    workArea,
   );
-
-  window.setBounds({ x, y, width, height }, false);
+  window.setBounds({ x: next.x, y: next.y, width, height }, false);
 };
 
-const placeAtBottomRight = (window: BrowserWindow): void => {
-  const workArea = screen.getPrimaryDisplay().workArea;
-  const { width, height } = dimensions.collapsed;
-  window.setBounds(
-    {
-      x: workArea.x + workArea.width - width - 24,
-      y: workArea.y + workArea.height - height - 24,
-      width,
-      height,
-    },
-    false,
-  );
+const persistCurrentPosition = (window: BrowserWindow): void => {
+  if (window.isDestroyed()) return;
+  const bounds = window.getBounds();
+  const display = screen.getDisplayMatching(bounds);
+  const position: PersistedPosition = {
+    schemaVersion: POSITION_SCHEMA_VERSION,
+    x: bounds.x,
+    y: bounds.y,
+    displayId: display.id,
+  };
+  try {
+    writePersistedPositionToDisk(position);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'unknown';
+    console.warn(`[window] failed to persist position: ${message}`);
+  }
+};
+
+const stopDrag = (): void => {
+  if (dragTimer) {
+    clearInterval(dragTimer);
+    dragTimer = null;
+  }
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  persistCurrentPosition(mainWindow);
 };
 
 export const createMainWindow = (preloadPath: string, devServerUrl?: string): BrowserWindow => {
+  const collapsedSize = dimensions.collapsed;
+  const restored = resolveStartupPosition(collapsedSize);
+
   mainWindow = new BrowserWindow({
-    width: dimensions.collapsed.width,
-    height: dimensions.collapsed.height,
-    minWidth: dimensions.collapsed.width,
-    minHeight: dimensions.collapsed.height,
+    width: collapsedSize.width,
+    height: collapsedSize.height,
+    minWidth: collapsedSize.width,
+    minHeight: collapsedSize.height,
     maxWidth: maxBounds.width,
     maxHeight: maxBounds.height,
+    x: restored.x,
+    y: restored.y,
     show: false,
     transparent: true,
     frame: false,
@@ -78,7 +137,6 @@ export const createMainWindow = (preloadPath: string, devServerUrl?: string): Br
   });
 
   mainWindow.setAlwaysOnTop(true, 'floating');
-  placeAtBottomRight(mainWindow);
 
   if (devServerUrl) {
     void mainWindow.loadURL(devServerUrl);
@@ -97,8 +155,16 @@ export const createMainWindow = (preloadPath: string, devServerUrl?: string): Br
     }
   });
 
+  mainWindow.on('blur', stopDrag);
+  mainWindow.on('hide', stopDrag);
+
   mainWindow.on('closed', () => {
+    stopDrag();
     mainWindow = null;
+  });
+
+  mainWindow.webContents.on('render-process-gone', () => {
+    stopDrag();
   });
 
   return mainWindow;
@@ -132,25 +198,38 @@ export const setQuitting = (value: boolean): void => {
 };
 
 export const beginWindowDrag = (): void => {
-  if (!mainWindow || dragTimer) return;
+  if (!mainWindow || mainWindow.isDestroyed() || dragTimer) return;
 
-  const startCursor = screen.getCursorScreenPoint();
+  const startCursor: Point = screen.getCursorScreenPoint();
   const startBounds = mainWindow.getBounds();
+  const startSize: Size = { width: startBounds.width, height: startBounds.height };
 
   dragTimer = setInterval(() => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
 
-    const cursor = screen.getCursorScreenPoint();
-    mainWindow.setPosition(
-      startBounds.x + cursor.x - startCursor.x,
-      startBounds.y + cursor.y - startCursor.y,
-      false,
-    );
+    const cursor: Point = screen.getCursorScreenPoint();
+    const next = computeDragPosition(startBounds, startCursor, cursor);
+    const targetRectangle: Rectangle = {
+      x: next.x,
+      y: next.y,
+      width: startSize.width,
+      height: startSize.height,
+    };
+    const workArea = screen.getDisplayMatching(targetRectangle).workArea;
+    const clamped = clampPointToWorkArea(next, startSize, workArea);
+    mainWindow.setPosition(clamped.x, clamped.y, false);
   }, 16);
 };
 
 export const endWindowDrag = (): void => {
-  if (!dragTimer) return;
-  clearInterval(dragTimer);
-  dragTimer = null;
+  stopDrag();
+};
+
+export const persistWindowPosition = (): void => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  persistCurrentPosition(mainWindow);
+};
+
+export const stopWindowDrag = (): void => {
+  stopDrag();
 };
