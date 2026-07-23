@@ -3,8 +3,7 @@ import { TokenBall } from './components/TokenBall';
 import { TokenPanel } from './components/TokenPanel';
 import { Settings } from './pages/Settings';
 import { useTokenStore } from './store/tokenStore';
-
-type View = 'collapsed' | 'expanded' | 'settings';
+import type { WindowState } from '../electron/shared/token';
 
 const defaultRefreshInterval = 30;
 const refreshOptions = [10, 30, 60, 300];
@@ -14,12 +13,12 @@ const getStoredRefreshInterval = (): number => {
   return refreshOptions.includes(value) ? value : defaultRefreshInterval;
 };
 
-const setWindowState = (view: View): void => {
+const setWindowState = (view: WindowState): void => {
   void window.electronAPI?.setWindowState(view);
 };
 
 const App = () => {
-  const [view, setView] = useState<View>('collapsed');
+  const [view, setView] = useState<WindowState>('collapsed');
   const [refreshInterval, setRefreshInterval] = useState(getStoredRefreshInterval);
   const updateToken = useTokenStore((state) => state.updateToken);
 
@@ -50,7 +49,7 @@ const App = () => {
     return unsubscribe;
   }, []);
 
-  const changeView = (nextView: View): void => {
+  const changeView = (nextView: WindowState): void => {
     setView(nextView);
     setWindowState(nextView);
   };

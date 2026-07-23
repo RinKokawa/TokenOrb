@@ -1,20 +1,5 @@
 import { Buffer } from 'node:buffer';
-
-export type TokenPlanModel = {
-  model: string;
-  usedPercent: number;
-  remainsPercent: number;
-  weeklyUsedPercent: number;
-  totalPercent: number;
-  resetAt: number;
-};
-
-export type TokenPlanSnapshot = {
-  fetchedAt: number;
-  baseUrl: string;
-  models: TokenPlanModel[];
-  primary: TokenPlanModel | null;
-};
+import type { TokenPlanModel, TokenPlanSnapshot } from '../shared/token';
 
 export class InvalidTokenError extends Error {
   constructor(message: string) {
@@ -86,7 +71,7 @@ const parseModel = (value: unknown): TokenPlanModel | null => {
 
   const usedPercent = Math.min(100, Math.max(0, parsePercent(raw.current_interval_used_percent)));
   const totalPercent = Math.max(0, parsePercent(raw.current_interval_total_percent));
-  const remainsPercent = totalPercent > 0 ? Math.max(0, totalPercent - usedPercent) : 0;
+  const remainingPercent = totalPercent > 0 ? Math.max(0, totalPercent - usedPercent) : 0;
   const weeklyUsedPercent = Math.min(
     150,
     Math.max(0, parsePercent(raw.current_weekly_used_percent)),
@@ -96,7 +81,7 @@ const parseModel = (value: unknown): TokenPlanModel | null => {
   return {
     model: raw.model_name,
     usedPercent,
-    remainsPercent,
+    remainingPercent,
     weeklyUsedPercent,
     totalPercent,
     resetAt,

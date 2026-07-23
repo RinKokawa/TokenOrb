@@ -1,9 +1,10 @@
 import { BrowserWindow, screen } from 'electron';
 import path from 'node:path';
+import type { WindowState } from './shared/token';
+
+export type { WindowState } from './shared/token';
 
 type WindowDimensions = { width: number; height: number };
-
-export type WindowState = 'collapsed' | 'expanded' | 'settings';
 
 const dimensions: Record<WindowState, WindowDimensions> = {
   collapsed: { width: 96, height: 96 },

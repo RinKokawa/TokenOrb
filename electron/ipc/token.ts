@@ -10,22 +10,20 @@ import {
 } from '../window';
 import { loadRuntimeConfig, type RuntimeConfig } from '../config';
 import {
+  createMockTokenPlanSnapshot,
+  type TokenBalance,
+  type TokenPlanSnapshot,
+} from '../shared/token';
+import {
   fetchTokenPlan,
   InvalidResponseError,
   InvalidTokenError,
-  type TokenPlanSnapshot,
 } from '../api/minimax';
 
-type TokenBalance = {
-  total: number;
-  used: number;
-  remaining: number;
-};
-
 const initialBalance: TokenBalance = {
-  total: 1_000_000,
-  used: 300_000,
-  remaining: 700_000,
+  totalPercent: 100,
+  usedPercent: 30,
+  remainingPercent: 70,
 };
 
 let tokenBalance = initialBalance;
@@ -40,16 +38,16 @@ const isTokenBalance = (value: unknown): value is TokenBalance => {
 
   const candidate = value as Record<string, unknown>;
   return (
-    typeof candidate.total === 'number' &&
-    Number.isFinite(candidate.total) &&
-    candidate.total > 0 &&
-    typeof candidate.used === 'number' &&
-    Number.isFinite(candidate.used) &&
-    candidate.used >= 0 &&
-    typeof candidate.remaining === 'number' &&
-    Number.isFinite(candidate.remaining) &&
-    candidate.remaining >= 0 &&
-    candidate.used + candidate.remaining === candidate.total
+    typeof candidate.totalPercent === 'number' &&
+    Number.isFinite(candidate.totalPercent) &&
+    candidate.totalPercent > 0 &&
+    typeof candidate.usedPercent === 'number' &&
+    Number.isFinite(candidate.usedPercent) &&
+    candidate.usedPercent >= 0 &&
+    typeof candidate.remainingPercent === 'number' &&
+    Number.isFinite(candidate.remainingPercent) &&
+    candidate.remainingPercent >= 0 &&
+    candidate.usedPercent + candidate.remainingPercent === candidate.totalPercent
   );
 };
 
@@ -58,11 +56,14 @@ const refreshMockBalance = (): TokenBalance => {
   const elapsedIntervals = Math.floor((now - lastMockUpdate) / 15_000);
 
   if (elapsedIntervals > 0) {
-    const used = Math.min(tokenBalance.total, tokenBalance.used + elapsedIntervals * 137);
+    const usedPercent = Math.min(
+      tokenBalance.totalPercent,
+      tokenBalance.usedPercent + elapsedIntervals * 0.0137,
+    );
     tokenBalance = {
-      total: tokenBalance.total,
-      used,
-      remaining: tokenBalance.total - used,
+      totalPercent: tokenBalance.totalPercent,
+      usedPercent,
+      remainingPercent: tokenBalance.totalPercent - usedPercent,
     };
     lastMockUpdate = now;
   }
@@ -91,7 +92,7 @@ export const registerTokenIpc = (): void => {
     const config = runtimeConfig ?? loadRuntimeConfig();
     if (!config.token) {
       console.warn('[token:fetch] MINIMAX_TOKEN is not configured; using mock balance');
-      return null;
+      return createMockTokenPlanSnapshot();
     }
 
     try {
@@ -103,7 +104,7 @@ export const registerTokenIpc = (): void => {
       });
       console.info(
         `[token:fetch] MiniMax ${config.baseUrl} returned ${snapshot.models.length} model(s); ` +
-          `primary=${snapshot.primary?.model ?? 'none'} remains=${snapshot.primary?.remainsPercent ?? 0}%`,
+          `primary=${snapshot.primary?.model ?? 'none'} remaining=${snapshot.primary?.remainingPercent ?? 0}%`,
       );
       return snapshot;
     } catch (error: unknown) {

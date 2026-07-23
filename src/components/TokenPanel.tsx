@@ -44,13 +44,14 @@ const statusDotMap: Record<StatusKey, string> = {
 const langOptions: Lang[] = ['en', 'zh'];
 
 export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPanelProps) => {
-  const { snapshot, percentage, total, isLoading, lastFetchedAt, status, error } = useTokenStore();
+  const { snapshot, percentage, totalPercent, isLoading, lastFetchedAt, status, error } =
+    useTokenStore();
   const t = useT();
   const statusKey = (status as StatusKey) ?? 'idle';
   const statusDot = statusDotMap[statusKey] ?? statusDotMap.idle;
   const statusLabel = t(`status.${statusKey}`);
   const primary = snapshot?.primary ?? null;
-  const usedNumeric = Math.max(0, total - percentage);
+  const usedNumeric = Math.max(0, totalPercent - percentage);
   const weeklyUsed = primary?.weeklyUsedPercent ?? 0;
   const ringColor = getBalanceStroke(percentage);
   const ringBg = getBalanceRingBgClass(percentage);
@@ -158,7 +159,10 @@ export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPane
             {formatNumber(percentage)}
           </p>
           <p className="mt-1 text-[11px] text-[var(--muted)]">
-            {t('panel.of', { total: formatNumber(total), model: primary?.model ?? '—' })}
+            {t('panel.of', {
+              total: formatNumber(totalPercent),
+              model: primary?.model ?? '—',
+            })}
           </p>
         </div>
       </div>

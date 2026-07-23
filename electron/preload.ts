@@ -1,32 +1,13 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import type {
+  ElectronApi,
+  TokenBalance,
+  TokenPlanSnapshot,
+  WindowState,
+  WindowViewListener,
+} from './shared/token';
 
-type TokenBalance = {
-  total: number;
-  used: number;
-  remaining: number;
-};
-
-type TokenPlanModel = {
-  model: string;
-  usedPercent: number;
-  remainsPercent: number;
-  weeklyUsedPercent: number;
-  totalPercent: number;
-  resetAt: number;
-};
-
-type TokenPlanSnapshot = {
-  fetchedAt: number;
-  baseUrl: string;
-  models: TokenPlanModel[];
-  primary: TokenPlanModel | null;
-};
-
-type WindowState = 'collapsed' | 'expanded' | 'settings';
-
-type WindowViewListener = (view: WindowState) => void;
-
-const electronApi = {
+const electronApi: ElectronApi = {
   getTokenBalance: (): Promise<TokenBalance> => ipcRenderer.invoke('token:get'),
   updateTokenBalance: (value: TokenBalance): Promise<TokenBalance> =>
     ipcRenderer.invoke('token:update', value),

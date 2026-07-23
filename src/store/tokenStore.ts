@@ -20,9 +20,9 @@ export interface TokenState extends TokenBalance {
 }
 
 const initialBalance: TokenBalance = {
-  total: 0,
-  used: 0,
-  remaining: 0,
+  totalPercent: 0,
+  usedPercent: 0,
+  remainingPercent: 0,
 };
 
 export const useTokenStore = create<TokenState>((set) => ({
@@ -41,16 +41,16 @@ export const useTokenStore = create<TokenState>((set) => ({
     try {
       const snapshot = await fetchTokenPlan();
       const primary = snapshot.primary;
-      const total = primary?.totalPercent ?? 0;
-      const remaining = primary?.remainsPercent ?? 0;
-      const used = primary?.usedPercent ?? 0;
-      const percentage = total > 0 ? Math.round(remaining) : 0;
+      const totalPercent = primary?.totalPercent ?? 0;
+      const remainingPercent = primary?.remainingPercent ?? 0;
+      const usedPercent = primary?.usedPercent ?? 0;
+      const percentage = totalPercent > 0 ? Math.round(remainingPercent) : 0;
 
       set({
         snapshot,
-        total,
-        used,
-        remaining,
+        totalPercent,
+        usedPercent,
+        remainingPercent,
         percentage,
         lastFetchedAt: snapshot.fetchedAt,
         quotaResetAt: primary?.resetAt || null,
