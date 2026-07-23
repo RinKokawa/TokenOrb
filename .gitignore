@@ -19,7 +19,6 @@ secrets/
 
 *.log
 npm-debug.log*
-pnpm-debug.log*
 yarn-debug.log*
 .DS_Store
 *.tsbuildinfo

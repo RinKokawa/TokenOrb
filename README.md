@@ -17,7 +17,7 @@
 ## 环境要求
 
 - Node.js `20.19+`
-- pnpm `11.15.1`（项目已通过 `packageManager` 固定版本）
+- npm `10+`（随 Node.js 一起安装）
 - Windows 10/11 或 macOS
 
 ## 完整初始化命令
@@ -27,42 +27,41 @@
 ```bash
 mkdir token-orb
 cd token-orb
-corepack enable
-pnpm init
-pnpm add react@^19.1.0 react-dom@^19.1.0 zustand@^5.0.6 framer-motion@^12.23.6
-pnpm add -D electron@^37.2.0 electron-builder@26.15.7 vite@^7.0.4 @vitejs/plugin-react@^5.0.0 typescript@^5.8.3 @types/node@^22.15.34 @types/react@^19.1.8 @types/react-dom@^19.1.6 tailwindcss@^4.1.11 @tailwindcss/vite@^4.1.11 eslint@^9.30.1 @eslint/js@^9.30.1 typescript-eslint@^8.36.0 eslint-plugin-react-hooks@^7.1.1 eslint-plugin-react-refresh@^0.4.20 globals@^16.3.0 prettier@^3.6.2 concurrently@^9.2.0 wait-on@^8.0.3 cross-env@^7.0.3
+npm init -y
+npm install react@^19.1.0 react-dom@^19.1.0 zustand@^5.0.6 framer-motion@^12.23.6
+npm install -D electron@^37.2.0 electron-builder@26.15.7 vite@^7.0.4 @vitejs/plugin-react@^5.0.0 typescript@^5.8.3 @types/node@^22.15.34 @types/react@^19.1.8 @types/react-dom@^19.1.6 tailwindcss@^4.1.11 @tailwindcss/vite@^4.1.11 eslint@^9.30.1 @eslint/js@^9.30.1 typescript-eslint@^8.36.0 eslint-plugin-react-hooks@^7.1.1 eslint-plugin-react-refresh@^0.4.20 globals@^16.3.0 prettier@^3.6.2 concurrently@^9.2.0 wait-on@^8.0.3 cross-env@^7.0.3
 ```
 
 当前项目已包含完整 `package.json`，正常使用只需：
 
 ```bash
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 ## 常用命令
 
 ```bash
 # 开发模式：同时启动 Vite、Electron TypeScript watch 和 Electron
-pnpm dev
+npm run dev
 
 # ESLint
-pnpm lint
+npm run lint
 
 # TypeScript 类型检查
-pnpm typecheck
+npm run typecheck
 
 # 构建 renderer 和 Electron main/preload
-pnpm build
+npm run build
 
 # 当前平台安装包
-pnpm dist
+npm run dist
 
 # Windows NSIS 安装包
-pnpm dist:win
+npm run dist:win
 
 # macOS DMG 安装包
-pnpm dist:mac
+npm run dist:mac
 ```
 
 Windows 安装包应在 Windows 主机生成，macOS DMG 应在 macOS 主机生成。产物输出到 `release/`。
@@ -99,7 +98,6 @@ token-orb/
 ├── eslint.config.mjs
 ├── index.html
 ├── package.json
-├── pnpm-workspace.yaml
 ├── tsconfig.app.json
 ├── tsconfig.electron.json
 ├── tsconfig.json
