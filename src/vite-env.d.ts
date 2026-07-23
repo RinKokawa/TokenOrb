@@ -18,6 +18,7 @@ declare global {
       endWindowDrag: () => void;
       showWindow: () => void;
       hideWindow: () => void;
+      quitApp: () => void;
       onViewChange: (listener: WindowViewListener) => () => void;
     };
   }

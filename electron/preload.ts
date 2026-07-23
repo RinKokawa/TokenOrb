@@ -40,6 +40,7 @@ const electronApi = {
   endWindowDrag: (): void => ipcRenderer.send('window:drag-end'),
   showWindow: (): void => ipcRenderer.send('window:show'),
   hideWindow: (): void => ipcRenderer.send('window:hide'),
+  quitApp: (): void => ipcRenderer.send('app:quit'),
   onViewChange: (listener: WindowViewListener): (() => void) => {
     const handler = (_event: IpcRendererEvent, view: WindowState): void => listener(view);
     ipcRenderer.on('view:change', handler);

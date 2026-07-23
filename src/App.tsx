@@ -52,7 +52,7 @@ const App = () => {
       <div className="app-shell">
         <TokenPanel
           onClose={() => changeView('collapsed')}
-          onHide={() => window.electronAPI?.hideWindow()}
+          onQuit={() => window.electronAPI?.quitApp()}
           onRefresh={() => void updateToken().catch(() => undefined)}
           onSettings={() => changeView('settings')}
         />

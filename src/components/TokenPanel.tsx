@@ -9,7 +9,7 @@ import { getLang, setLang, type Lang, useT } from '../i18n';
 
 type TokenPanelProps = {
   onClose: () => void;
-  onHide: () => void;
+  onQuit: () => void;
   onRefresh: () => void;
   onSettings: () => void;
 };
@@ -43,7 +43,7 @@ const statusDotMap: Record<StatusKey, string> = {
 
 const langOptions: Lang[] = ['en', 'zh'];
 
-export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPanelProps) => {
+export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPanelProps) => {
   const { snapshot, percentage, total, isLoading, lastFetchedAt, status, error } = useTokenStore();
   const t = useT();
   const statusKey = (status as StatusKey) ?? 'idle';
@@ -194,10 +194,10 @@ export const TokenPanel = ({ onClose, onHide, onRefresh, onSettings }: TokenPane
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-lg px-3 py-2 text-xs font-medium text-[var(--muted)] transition hover:bg-white/10 hover:text-white"
-            onClick={onHide}
+            className="rounded-lg px-3 py-2 text-xs font-medium text-rose-300/90 transition hover:bg-rose-500/15 hover:text-rose-200"
+            onClick={onQuit}
           >
-            {t('panel.hide')}
+            {t('panel.closeApp')}
           </button>
           <button
             type="button"

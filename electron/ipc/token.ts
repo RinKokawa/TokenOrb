@@ -3,6 +3,7 @@ import {
   beginWindowDrag,
   endWindowDrag,
   hideMainWindow,
+  setQuitting,
   setWindowState,
   showMainWindow,
   type WindowState,
@@ -141,4 +142,8 @@ export const registerTokenIpc = (): void => {
   ipcMain.on('window:drag-end', endWindowDrag);
   ipcMain.on('window:show', showMainWindow);
   ipcMain.on('window:hide', hideMainWindow);
+  ipcMain.on('app:quit', () => {
+    setQuitting(true);
+    app.quit();
+  });
 };
