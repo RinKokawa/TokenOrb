@@ -40,6 +40,17 @@ const BROWSER_REFERER = 'https://platform.minimaxi.com/';
 const ACCEPT_LANGUAGE = 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6';
 const TOKEN_COOKIE_NAME = '_token';
 const GROUP_COOKIE_NAME = 'minimax_group_id_v2';
+const TOKEN_PLAN_PATH = '/backend/account/token_plan/remains_percent';
+
+const SAFE_NETWORK_MESSAGE = 'MiniMax request failed';
+const SAFE_TIMEOUT_MESSAGE = 'MiniMax request timed out';
+const SAFE_NON_JSON_MESSAGE = 'MiniMax response was not valid JSON';
+const SAFE_NON_OK_MESSAGE = (status: number): string => `MiniMax request failed (HTTP ${status})`;
+const SAFE_AUTH_MESSAGE = (status: number): string =>
+  `MiniMax rejected the cookie/session (HTTP ${status})`;
+const SAFE_BASE_RESP_MESSAGE = 'MiniMax reported a non-zero status';
+const SAFE_EMPTY_MODEL_MESSAGE = 'MiniMax response did not include any model_remains entries';
+const SAFE_URL_MESSAGE = 'MiniMax base URL is not a safe destination';
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -115,11 +126,83 @@ const buildCookieHeader = (input: FetchTokenPlanInput): string => {
   return parts.join('; ');
 };
 
+const isLoopbackHost = (host: string): boolean => {
+  const lower = host.toLowerCase();
+  if (lower === 'localhost' || lower.endsWith('.localhost')) return true;
+  if (lower === '127.0.0.1' || lower.startsWith('127.')) return true;
+  if (lower === '[::1]' || lower.startsWith('[::1]:')) return true;
+  return false;
+};
+
+const isAmbiguousHost = (host: string): boolean => {
+  if (host.length === 0) return true;
+  if (/[\s/?#@\\]/.test(host)) return true;
+  if (host.includes('..')) return true;
+  if (/%/.test(host)) return true;
+  return false;
+};
+
+export const validateBaseUrl = (rawBaseUrl: unknown): string => {
+  if (typeof rawBaseUrl !== 'string') {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+  const trimmed = rawBaseUrl.trim();
+  if (trimmed.length === 0) {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+
+  if (parsed.username !== '' || parsed.password !== '') {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+  if (parsed.search !== '' || parsed.hash !== '') {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+  if (parsed.pathname !== '/' && parsed.pathname !== '') {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+
+  const protocol = parsed.protocol;
+  if (protocol !== 'https:' && protocol !== 'http:') {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+
+  const host = parsed.hostname;
+  if (host.length === 0 || isAmbiguousHost(host)) {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+
+  if (protocol === 'http:' && !isLoopbackHost(host)) {
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+
+  return `${parsed.protocol}//${parsed.host}`;
+};
+
+const buildRequestUrl = (safeBaseUrl: string): string => {
+  const base = new URL(safeBaseUrl);
+  return new URL(TOKEN_PLAN_PATH, `${base.protocol}//${base.host}`).toString();
+};
+
 export const fetchTokenPlan = async (input: FetchTokenPlanInput): Promise<TokenPlanSnapshot> => {
+  let safeBaseUrl: string;
+  try {
+    safeBaseUrl = validateBaseUrl(input.baseUrl);
+  } catch (error: unknown) {
+    if (error instanceof InvalidResponseError) throw error;
+    throw new InvalidResponseError(SAFE_URL_MESSAGE);
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  const url = new URL('/backend/account/token_plan/remains_percent', input.baseUrl).toString();
+  const url = buildRequestUrl(safeBaseUrl);
   const headers: Record<string, string> = {
     Accept: 'application/json, text/plain, */*',
     'Accept-Language': ACCEPT_LANGUAGE,
@@ -146,39 +229,32 @@ export const fetchTokenPlan = async (input: FetchTokenPlanInput): Promise<TokenP
       signal: controller.signal,
     });
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new InvalidResponseError('MiniMax request timed out');
-    }
-    const message = error instanceof Error ? error.message : 'Network error';
-    throw new InvalidResponseError(`MiniMax request failed: ${message}`);
-  } finally {
     clearTimeout(timer);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new InvalidResponseError(SAFE_TIMEOUT_MESSAGE);
+    }
+    throw new InvalidResponseError(SAFE_NETWORK_MESSAGE);
   }
+  clearTimeout(timer);
 
   if (response.status === 401 || response.status === 403) {
-    throw new InvalidTokenError(`MiniMax rejected the cookie/session (HTTP ${response.status})`);
+    throw new InvalidTokenError(SAFE_AUTH_MESSAGE(response.status));
   }
   if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    const snippet = body.length > 120 ? `${body.slice(0, 117)}...` : body;
-    throw new InvalidResponseError(
-      `MiniMax HTTP ${response.status}${snippet ? `: ${snippet}` : ''}`,
-    );
+    await response.text().catch(() => undefined);
+    throw new InvalidResponseError(SAFE_NON_OK_MESSAGE(response.status));
   }
 
   const rawText = await response.text();
   let parsed: RawResponse;
   try {
     parsed = JSON.parse(rawText) as RawResponse;
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Invalid JSON';
-    throw new InvalidResponseError(`MiniMax response is not JSON: ${message}`);
+  } catch {
+    throw new InvalidResponseError(SAFE_NON_JSON_MESSAGE);
   }
 
   if (!baseRespOk(parsed)) {
-    const status = (parsed.base_resp as { status_msg?: unknown })?.status_msg;
-    const message = typeof status === 'string' ? status : 'MiniMax reported a non-zero status';
-    throw new InvalidResponseError(message);
+    throw new InvalidResponseError(SAFE_BASE_RESP_MESSAGE);
   }
 
   const list = Array.isArray(parsed.model_remains) ? parsed.model_remains : [];
@@ -187,12 +263,12 @@ export const fetchTokenPlan = async (input: FetchTokenPlanInput): Promise<TokenP
     .filter((entry): entry is TokenPlanModel => entry !== null);
 
   if (models.length === 0) {
-    throw new InvalidResponseError('MiniMax response did not include any model_remains entries');
+    throw new InvalidResponseError(SAFE_EMPTY_MODEL_MESSAGE);
   }
 
   return {
     fetchedAt: Date.now(),
-    baseUrl: input.baseUrl,
+    baseUrl: safeBaseUrl,
     models,
     primary: pickPrimary(models),
   };
