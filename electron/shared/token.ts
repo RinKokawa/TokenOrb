@@ -23,10 +23,36 @@ export interface TokenPlanSnapshot {
 export type WindowState = 'collapsed' | 'expanded' | 'settings';
 export type WindowViewListener = (view: WindowState) => void;
 
+export type ConfigSecretUpdate =
+  | { kind: 'keep' }
+  | { kind: 'replace'; value: string | null }
+  | { kind: 'clear' };
+
+export interface PublicConfigStatus {
+  baseUrl: string;
+  groupId: string | null;
+  tokenConfigured: boolean;
+  cookieConfigured: boolean;
+  storageAvailable: boolean;
+}
+
+export interface ConfigSaveInput {
+  baseUrl: string;
+  groupId: string | null;
+  token: ConfigSecretUpdate;
+  cookieOverride: ConfigSecretUpdate;
+}
+
+export type ConfigSaveResult =
+  | { ok: true; status: PublicConfigStatus }
+  | { ok: false; error: string };
+
 export interface ElectronApi {
   getTokenBalance: () => Promise<TokenBalance>;
   updateTokenBalance: (balance: TokenBalance) => Promise<TokenBalance>;
   fetchTokenPlan: () => Promise<TokenPlanSnapshot | null>;
+  getConfigStatus: () => Promise<PublicConfigStatus>;
+  saveConfig: (input: ConfigSaveInput) => Promise<ConfigSaveResult>;
   setWindowState: (state: WindowState) => Promise<WindowState>;
   getAutoLaunch: () => Promise<boolean>;
   setAutoLaunch: (enabled: boolean) => Promise<boolean>;

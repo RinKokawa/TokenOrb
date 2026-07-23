@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import path from 'node:path';
-import { loadRuntimeConfig } from './config';
+import { loadPersistedRuntimeConfig } from './config';
+import { bootstrapConfig, registerConfigIpc } from './ipc/config';
 import { registerTokenIpc, setRuntimeConfig } from './ipc/token';
 import { createTray, destroyTray } from './tray';
 import {
@@ -21,15 +22,19 @@ if (!hasSingleInstanceLock) {
   });
 
   const bootstrap = (): void => {
-    const config = loadRuntimeConfig();
+    bootstrapConfig();
+    const config = loadPersistedRuntimeConfig();
     setRuntimeConfig(config);
     console.info(
       `[main] MiniMax config baseUrl=${config.baseUrl} token=${
         config.token ? 'configured' : 'missing'
-      } group=${config.groupId ?? 'missing'}`,
+      } group=${config.groupId ?? 'missing'} storage=${
+        config.storageAvailable ? 'available' : 'unavailable'
+      }`,
     );
 
     registerTokenIpc();
+    registerConfigIpc();
     createMainWindow(path.join(__dirname, 'preload.js'), process.env.VITE_DEV_SERVER_URL);
 
     createTray({

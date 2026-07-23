@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 import type {
+  ConfigSaveInput,
+  ConfigSaveResult,
   ElectronApi,
+  PublicConfigStatus,
   TokenBalance,
   TokenPlanSnapshot,
   WindowState,
@@ -12,6 +15,11 @@ const electronApi: ElectronApi = {
   updateTokenBalance: (value: TokenBalance): Promise<TokenBalance> =>
     ipcRenderer.invoke('token:update', value),
   fetchTokenPlan: (): Promise<TokenPlanSnapshot | null> => ipcRenderer.invoke('token:fetch'),
+  getConfigStatus: (): Promise<PublicConfigStatus> => {
+    return ipcRenderer.invoke('config:get');
+  },
+  saveConfig: (input: ConfigSaveInput): Promise<ConfigSaveResult> =>
+    ipcRenderer.invoke('config:save', input),
   setWindowState: (state: WindowState): Promise<WindowState> =>
     ipcRenderer.invoke('window:set-state', state),
   getAutoLaunch: (): Promise<boolean> => ipcRenderer.invoke('app:get-auto-launch'),
