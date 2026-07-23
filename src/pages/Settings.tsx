@@ -38,7 +38,7 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
   const statusLine = t(`settings.status.${status}`);
 
   return (
-    <section className="glass-panel flex w-[320px] flex-col rounded-2xl p-5 text-slate-200">
+    <section className="glass-panel flex w-[340px] flex-col rounded-2xl p-5 text-slate-200">
       <header className="flex items-center gap-3">
         <button
           type="button"

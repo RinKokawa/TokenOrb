@@ -59,7 +59,7 @@ export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPane
 
   return (
     <motion.section
-      className="glass-panel flex w-[320px] flex-col rounded-2xl p-5 text-slate-200"
+      className="glass-panel flex w-[340px] flex-col rounded-2xl p-5 text-slate-200"
       initial={{ opacity: 0, scale: 0.92, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}

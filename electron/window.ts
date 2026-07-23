@@ -7,8 +7,13 @@ export type WindowState = 'collapsed' | 'expanded' | 'settings';
 
 const dimensions: Record<WindowState, WindowDimensions> = {
   collapsed: { width: 96, height: 96 },
-  expanded: { width: 320, height: 500 },
-  settings: { width: 320, height: 580 },
+  expanded: { width: 340, height: 560 },
+  settings: { width: 340, height: 660 },
+};
+
+const maxBounds: WindowDimensions = {
+  width: Math.max(...Object.values(dimensions).map((d) => d.width)),
+  height: Math.max(...Object.values(dimensions).map((d) => d.height)),
 };
 
 let mainWindow: BrowserWindow | null = null;
@@ -52,8 +57,8 @@ export const createMainWindow = (preloadPath: string, devServerUrl?: string): Br
     height: dimensions.collapsed.height,
     minWidth: dimensions.collapsed.width,
     minHeight: dimensions.collapsed.height,
-    maxWidth: dimensions.expanded.width,
-    maxHeight: dimensions.expanded.height,
+    maxWidth: maxBounds.width,
+    maxHeight: maxBounds.height,
     show: false,
     transparent: true,
     frame: false,
