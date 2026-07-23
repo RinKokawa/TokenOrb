@@ -22,8 +22,7 @@ const formatNextRefreshClock = (timestamp: number | null): string => {
   const date = new Date(timestamp);
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
+  return `${hours}:${minutes}`;
 };
 
 const formatCountdown = (ms: number): string => {
@@ -135,52 +134,55 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
           />
         </svg>
         <span className="relative flex flex-col items-center leading-none">
-          <span className="relative inline-flex h-7 min-w-12 items-center justify-center overflow-hidden text-xl font-semibold tracking-tight">
-            <AnimatePresence initial={false} mode="popLayout">
+          <AnimatePresence initial={false} mode="wait">
+            {isHovered && nextRefreshAt && remainingMs !== null ? (
               <motion.span
-                key={safePercentage}
-                className={`absolute ${textColor}`}
-                initial={{ y: 16, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -16, opacity: 0 }}
-                transition={{ duration: 0.22 }}
+                key="refresh-info"
+                className="flex flex-col items-center"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
               >
-                {safePercentage}%
+                <span className="font-mono text-base font-semibold text-white">
+                  {formatNextRefreshClock(nextRefreshAt)}
+                </span>
+                <span className="mt-0.5 font-mono text-[10px] font-medium text-indigo-300">
+                  -{formatCountdown(remainingMs)}
+                </span>
               </motion.span>
-            </AnimatePresence>
-          </span>
-          <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-slate-300">
-            {t('ball.label')}
-          </span>
+            ) : (
+              <motion.span
+                key="balance"
+                className="flex flex-col items-center"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
+                <span className="relative inline-flex h-7 min-w-12 items-center justify-center overflow-hidden text-xl font-semibold tracking-tight">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    <motion.span
+                      key={safePercentage}
+                      className={`absolute ${textColor}`}
+                      initial={{ y: 16, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -16, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                    >
+                      {safePercentage}%
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+                <span className="mt-1 text-[9px] font-medium tracking-[0.22em] text-slate-300">
+                  {t('ball.label')}
+                </span>
+              </motion.span>
+            )}
+          </AnimatePresence>
         </span>
       </motion.div>
       </motion.button>
-      <AnimatePresence>
-        {isHovered && nextRefreshAt && remainingMs !== null ? (
-          <motion.div
-            key="refresh-tooltip"
-            role="tooltip"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.15 }}
-            className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-white/15 bg-slate-950/90 px-3 py-2 text-[11px] leading-relaxed text-slate-200 shadow-xl backdrop-blur-md"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[var(--muted)]">{t('ball.tooltip.nextAt')}</span>
-              <span className="font-mono font-medium text-white">
-                {formatNextRefreshClock(nextRefreshAt)}
-              </span>
-            </div>
-            <div className="mt-0.5 flex items-center gap-2">
-              <span className="text-[var(--muted)]">{t('ball.tooltip.countdown')}</span>
-              <span className="font-mono font-medium text-indigo-300">
-                {formatCountdown(remainingMs)}
-              </span>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </div>
   );
 };
