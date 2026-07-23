@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTokenStore } from '../store/tokenStore';
 import { getBalanceStroke, getBalanceTextClass } from '../lib/balanceColor';
 import { useT } from '../i18n';
@@ -25,36 +25,16 @@ const formatNextRefreshClock = (timestamp: number | null): string => {
   return `${hours}:${minutes}`;
 };
 
-const formatCountdown = (ms: number): string => {
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  }
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-};
-
 export const TokenBall = ({ onOpen }: TokenBallProps) => {
   const percentage = useTokenStore((state) => state.percentage);
   const nextRefreshAt = useTokenStore((state) => state.nextRefreshAt);
   const t = useT();
   const pointerState = useRef<PointerState | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
   const safePercentage = Math.min(Math.max(percentage, 0), 100);
   const dashOffset = circumference * (1 - safePercentage / 100);
   const ringColor = getBalanceStroke(safePercentage);
   const textColor = getBalanceTextClass(safePercentage);
-
-  useEffect(() => {
-    if (!isHovered) return undefined;
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [isHovered]);
-
-  const remainingMs = nextRefreshAt ? Math.max(0, nextRefreshAt - now) : null;
 
   const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>): void => {
     if (event.button !== 0) return;
@@ -132,7 +112,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
         </svg>
         <span className="relative flex flex-col items-center leading-none">
           <AnimatePresence initial={false} mode="wait">
-            {isHovered && nextRefreshAt && remainingMs !== null ? (
+            {isHovered && nextRefreshAt ? (
               <motion.span
                 key="refresh-info"
                 className="flex flex-col items-center"
@@ -143,9 +123,6 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
               >
                 <span className="font-mono text-base font-semibold text-white">
                   {formatNextRefreshClock(nextRefreshAt)}
-                </span>
-                <span className="mt-0.5 font-mono text-[10px] font-medium text-indigo-300">
-                  -{formatCountdown(remainingMs)}
                 </span>
               </motion.span>
             ) : (
