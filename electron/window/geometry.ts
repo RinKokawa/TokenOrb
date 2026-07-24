@@ -30,6 +30,21 @@ export const clampBoundsToWorkArea = (bounds: Rectangle, workArea: WorkArea): Re
   height: bounds.height,
 });
 
+export const positionResizedBoundsInWorkArea = (
+  currentBounds: Rectangle,
+  targetSize: Size,
+  workArea: WorkArea,
+): Rectangle =>
+  clampBoundsToWorkArea(
+    {
+      x: currentBounds.x,
+      y: currentBounds.y,
+      width: targetSize.width,
+      height: targetSize.height,
+    },
+    workArea,
+  );
+
 export const isWithinWorkArea = (bounds: Rectangle, workArea: WorkArea): boolean =>
   bounds.x >= workArea.x &&
   bounds.y >= workArea.y &&

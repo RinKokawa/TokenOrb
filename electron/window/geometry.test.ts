@@ -5,6 +5,7 @@ import {
   clampPointToWorkArea,
   computeDragPosition,
   isWithinWorkArea,
+  positionResizedBoundsInWorkArea,
 } from './geometry';
 
 describe('clamp', () => {
@@ -147,6 +148,51 @@ describe('clampBoundsToWorkArea', () => {
         { x: -1920, y: 0, width: 1920, height: 1080 },
       ),
     ).toEqual({ x: -1000, y: 500, width: 80, height: 80 });
+  });
+});
+
+describe('positionResizedBoundsInWorkArea', () => {
+  const workArea = { x: 0, y: 0, width: 1920, height: 1080 };
+
+  it('moves an expanded window left and up when the collapsed orb is at bottom-right', () => {
+    expect(
+      positionResizedBoundsInWorkArea(
+        { x: 1824, y: 984, width: 96, height: 96 },
+        { width: 340, height: 560 },
+        workArea,
+      ),
+    ).toEqual({ x: 1580, y: 520, width: 340, height: 560 });
+  });
+
+  it('keeps the top-left anchor when the expanded window already fits', () => {
+    expect(
+      positionResizedBoundsInWorkArea(
+        { x: 100, y: 100, width: 96, height: 96 },
+        { width: 340, height: 560 },
+        workArea,
+      ),
+    ).toEqual({ x: 100, y: 100, width: 340, height: 560 });
+  });
+
+  it('clamps a settings window on a negative-origin display', () => {
+    expect(
+      positionResizedBoundsInWorkArea(
+        { x: -96, y: 900, width: 96, height: 96 },
+        { width: 340, height: 660 },
+        { x: -1920, y: 0, width: 1920, height: 1080 },
+      ),
+    ).toEqual({ x: -340, y: 420, width: 340, height: 660 });
+  });
+
+  it('keeps the resized window fully within a non-zero work-area origin', () => {
+    const result = positionResizedBoundsInWorkArea(
+      { x: 2200, y: -120, width: 96, height: 96 },
+      { width: 340, height: 560 },
+      { x: 1920, y: -200, width: 1600, height: 900 },
+    );
+
+    expect(result).toEqual({ x: 2200, y: -120, width: 340, height: 560 });
+    expect(isWithinWorkArea(result, { x: 1920, y: -200, width: 1600, height: 900 })).toBe(true);
   });
 });
 

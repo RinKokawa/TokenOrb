@@ -1,9 +1,9 @@
 import { BrowserWindow, screen } from 'electron';
 import path from 'node:path';
 import {
-  clampBoundsToWorkArea,
   clampPointToWorkArea,
   computeDragPosition,
+  positionResizedBoundsInWorkArea,
   type Point,
   type Rectangle,
   type Size,
@@ -70,13 +70,14 @@ const resolveStartupPosition = (
 };
 
 const keepInWorkArea = (window: BrowserWindow, width: number, height: number): void => {
-  const workArea = screen.getDisplayMatching(window.getBounds()).workArea;
   const bounds = window.getBounds();
-  const next = clampBoundsToWorkArea(
+  const workArea = screen.getDisplayMatching(bounds).workArea;
+  const next = positionResizedBoundsInWorkArea(
     { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+    { width, height },
     workArea,
   );
-  window.setBounds({ x: next.x, y: next.y, width, height }, false);
+  window.setBounds(next, false);
 };
 
 const persistCurrentPosition = (window: BrowserWindow): void => {
