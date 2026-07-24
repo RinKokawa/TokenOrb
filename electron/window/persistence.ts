@@ -32,9 +32,7 @@ export const isValidPersistedPosition = (value: unknown): value is PersistedPosi
   return true;
 };
 
-export const parsePersistedPositionFile = (
-  rawText: string | null,
-): PersistedPosition | null => {
+export const parsePersistedPositionFile = (rawText: string | null): PersistedPosition | null => {
   if (rawText === null) return null;
   let parsed: unknown;
   try {

@@ -5,9 +5,7 @@ describe('createMockTokenPlanSnapshot', () => {
   it('creates the same snapshot for the same timestamp', () => {
     const fetchedAt = 1_750_000_000_000;
 
-    expect(createMockTokenPlanSnapshot(fetchedAt)).toEqual(
-      createMockTokenPlanSnapshot(fetchedAt),
-    );
+    expect(createMockTokenPlanSnapshot(fetchedAt)).toEqual(createMockTokenPlanSnapshot(fetchedAt));
     expect(createMockTokenPlanSnapshot(fetchedAt)).toMatchObject({
       fetchedAt,
       baseUrl: 'mock://',

@@ -85,32 +85,31 @@ describe('fetchTokenPlan URL validation', () => {
     mock.restore();
   });
 
-  it.each([
-    ['https://attacker.example.com'],
-    ['https://api.minimaxi.com'],
-  ])('accepts custom HTTPS host %s', async (baseUrl) => {
-    await fetchTokenPlan({
-      baseUrl,
-      token: SAFE_TOKEN,
-      groupId: SAFE_GROUP_ID,
-    });
-    expect(fetchCalls).toHaveLength(1);
-    expect(fetchCalls[0]!.url.startsWith(baseUrl)).toBe(true);
-  });
+  it.each([['https://attacker.example.com'], ['https://api.minimaxi.com']])(
+    'accepts custom HTTPS host %s',
+    async (baseUrl) => {
+      await fetchTokenPlan({
+        baseUrl,
+        token: SAFE_TOKEN,
+        groupId: SAFE_GROUP_ID,
+      });
+      expect(fetchCalls).toHaveLength(1);
+      expect(fetchCalls[0]!.url.startsWith(baseUrl)).toBe(true);
+    },
+  );
 
-  it.each([
-    ['http://localhost:8080'],
-    ['http://127.0.0.1:3000'],
-    ['http://[::1]:8080'],
-  ])('accepts HTTP loopback host %s', async (baseUrl) => {
-    await fetchTokenPlan({
-      baseUrl,
-      token: SAFE_TOKEN,
-      groupId: null,
-    });
-    expect(fetchCalls).toHaveLength(1);
-    expect(fetchCalls[0]!.url.startsWith(baseUrl)).toBe(true);
-  });
+  it.each([['http://localhost:8080'], ['http://127.0.0.1:3000'], ['http://[::1]:8080']])(
+    'accepts HTTP loopback host %s',
+    async (baseUrl) => {
+      await fetchTokenPlan({
+        baseUrl,
+        token: SAFE_TOKEN,
+        groupId: null,
+      });
+      expect(fetchCalls).toHaveLength(1);
+      expect(fetchCalls[0]!.url.startsWith(baseUrl)).toBe(true);
+    },
+  );
 
   it('rejects credentials embedded in the URL', async () => {
     await expect(
@@ -149,18 +148,15 @@ describe('fetchTokenPlan URL validation', () => {
     expect(fetchCalls).toHaveLength(0);
   });
 
-  it.each([
-    [''],
-    ['   '],
-    ['not a url'],
-    ['://missing-scheme'],
-    ['https://'],
-  ])('rejects malformed URL %s', async (baseUrl) => {
-    await expect(
-      fetchTokenPlan({ baseUrl, token: SAFE_TOKEN, groupId: null }),
-    ).rejects.toBeInstanceOf(InvalidResponseError);
-    expect(fetchCalls).toHaveLength(0);
-  });
+  it.each([[''], ['   '], ['not a url'], ['://missing-scheme'], ['https://']])(
+    'rejects malformed URL %s',
+    async (baseUrl) => {
+      await expect(
+        fetchTokenPlan({ baseUrl, token: SAFE_TOKEN, groupId: null }),
+      ).rejects.toBeInstanceOf(InvalidResponseError);
+      expect(fetchCalls).toHaveLength(0);
+    },
+  );
 
   it.each([
     ['https://example.com#fragment'],
@@ -188,7 +184,8 @@ describe('fetchTokenPlan URL validation', () => {
 describe('fetchTokenPlan safe error messages', () => {
   const SECRET_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.REALSECRETTOKENVALUE123456789';
   const SECRET_GROUP_ID = '9999999999999999999';
-  const SECRET_COOKIE = '_token=eyJhbGciOiJIUzI1NiJ9.SECRETCOOKIE123456789; minimax_group_id_v2=9999999999999999999';
+  const SECRET_COOKIE =
+    '_token=eyJhbGciOiJIUzI1NiJ9.SECRETCOOKIE123456789; minimax_group_id_v2=9999999999999999999';
 
   const assertSecretsLeaked = async (error: unknown): Promise<void> => {
     expect(error).toBeInstanceOf(Error);
@@ -207,7 +204,9 @@ describe('fetchTokenPlan safe error messages', () => {
 
   it('hides secrets when network request fails', async () => {
     const mock = installFetchMock(async () => {
-      throw new TypeError('getaddrinfo ENOTFOUND evil.example.com token=eyJhbGciOiJIUzI1NiJ9.REALSECRETTOKENVALUE123456789');
+      throw new TypeError(
+        'getaddrinfo ENOTFOUND evil.example.com token=eyJhbGciOiJIUzI1NiJ9.REALSECRETTOKENVALUE123456789',
+      );
     });
 
     try {

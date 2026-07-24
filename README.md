@@ -1,72 +1,122 @@
 # TokenOrb
 
-一个使用 Electron、React 19 和 TypeScript 构建的跨平台桌面悬浮球，实时显示你的 AI Token 余额。
+A lightweight, always-on-top desktop orb built with Electron + React 19 + TypeScript that
+shows your [MiniMax](https://www.minimaxi.com) token balance in real time. The collapsed
+form is a transparent, click-through-free 96×96 frosted-glass ball; a single click expands
+it into a 340×560 details panel and a 340×660 settings view.
 
-## 第一阶段功能
+The renderer is fully sandboxed (`contextIsolation: true`, `nodeIntegration: false`,
+`sandbox: true`) and only talks to Electron through a small `contextBridge` surface defined
+in `electron/preload.ts`. Credential storage delegates to the operating system's secure
+storage via Electron's `safeStorage`; nothing leaves the machine in plaintext.
 
-- 透明、无边框、置顶的 `80x80` 悬浮窗口
-- 鼠标拖动悬浮球，点击展开 `320x400` Token 面板
-- Token 剩余百分比环、浮动动画和数字滚动动画
-- Zustand Token 状态与可自动变化的 Mock 数据
-- 系统托盘、窗口隐藏、开机启动和退出
-- API Key 占位配置、刷新频率和 Dark/Light 主题
-- Windows NSIS `.exe` 与 macOS `.dmg` 打包配置
+---
 
-不包含用户登录、云端同步、支付或数据库。
+## Highlights
 
-## 环境要求
+- **Three window states** — collapsed `96×96`, expanded panel `340×560`, settings
+  `340×660`. The shell is rounded, borderless, transparent, and pinned above the dock
+  (`alwaysOnTop`, level `floating`).
+- **Pointer-friendly drag** — long-press / mouse-down on the ball grabs the OS cursor and
+  moves the window with a 16 ms tick; releasing or losing focus persists the position.
+- **Tray menu** with `Show / Settings / Launch at login / Quit`. Closing (×) hides the
+  window instead of quitting; only the tray menu or `Cmd/Ctrl+Q` actually exits.
+- **Real MiniMax API client** in `electron/api/minimax.ts` that authenticates with the
+  session `_token` cookie (or a full `Cookie:` header override) and reproduces the browser
+  request shape (`Origin`, `Referer`, `User-Agent`, `sec-ch-ua-*`). Returns a
+  per-model snapshot (`model`, `usedPercent`, `remainingPercent`,
+  `current_interval_total_percent`, `weeklyUsedPercent`, `resetAt`) normalised from the
+  `model_remains` array.
+- **Editable credentials** — the settings page can save a base URL, group ID,
+  `_token` cookie value, or full `Cookie:` header into the OS keychain. Leaving a field
+  empty keeps the existing value; clearing removes it. The renderer never sees the
+  secrets after they are saved.
+- **Online / Mock / Offline behaviour** — if `MINIMAX_TOKEN` is missing, the UI falls back
+  to a deterministic mock so the panel still animates. Real failures are surfaced as
+  user-safe messages (`unauthorized`, `timeout`, `network`, `response`, `unknown`).
+- **Visibility-aware refresh** with exponential backoff (5 s → 60 s ceiling). Polling
+  pauses when the document is hidden and queues a refresh on `visibilitychange`. Single
+  in-flight request at a time.
+- **i18n** (`en` / `zh`), theme toggle (`dark` / `light`, persisted via
+  `localStorage`), and `useReducedMotion()`-driven animations.
 
-- Node.js `20.19+`
-- npm `10+`（随 Node.js 一起安装）
-- Windows 10/11 或 macOS
+## Window states
 
-## 完整初始化命令
+| State       | Size    | Source                                               |
+| ----------- | ------- | ---------------------------------------------------- |
+| `collapsed` | 96×96   | `electron/window.ts` — floating ball, draggable      |
+| `expanded`  | 340×560 | `src/components/TokenPanel.tsx` — usage overview     |
+| `settings`  | 340×660 | `src/pages/Settings.tsx` — credentials & preferences |
 
-如果需要从空目录手动复现依赖初始化：
+The window is repositioned on every state change so it stays inside its current
+display's work area (`electron/window/geometry.ts`).
 
-```bash
-mkdir token-orb
-cd token-orb
-npm init -y
-npm install react@^19.1.0 react-dom@^19.1.0 zustand@^5.0.6 framer-motion@^12.23.6
-npm install -D electron@^37.2.0 electron-builder@26.15.7 vite@^7.0.4 @vitejs/plugin-react@^5.0.0 typescript@^5.8.3 @types/node@^22.15.34 @types/react@^19.1.8 @types/react-dom@^19.1.6 tailwindcss@^4.1.11 @tailwindcss/vite@^4.1.11 eslint@^9.30.1 @eslint/js@^9.30.1 typescript-eslint@^8.36.0 eslint-plugin-react-hooks@^7.1.1 eslint-plugin-react-refresh@^0.4.20 globals@^16.3.0 prettier@^3.6.2 concurrently@^9.2.0 wait-on@^8.0.3 cross-env@^7.0.3
+## Position persistence
+
+- `electron/window/persistence.ts` defines the `window-position.json` schema
+  (`schemaVersion`, `x`, `y`, `displayId`).
+- `electron/window/store.ts` writes the file to `app.getPath('userData')` with a
+  `.tmp-<pid>-<ts>` swap and `0o600` permissions.
+- On startup, `resolveStartupPosition()` rehydrates the position if the display still
+  exists; otherwise it anchors the orb to the bottom-right corner of the primary display
+  (`workArea.width − 96 − 24`, `workArea.height − 96 − 24`).
+
+## MiniMax authentication
+
+MiniMax does **not** use a Bearer API key. The Electron client reproduces the request a
+logged-in browser makes to `https://www.minimaxi.com/backend/account/token_plan/remains_percent`
+by sending:
+
+```
+Cookie: _token=<MINIMAX_TOKEN>; minimax_group_id_v2=<MINIMAX_GROUP_ID>
+Origin: https://platform.minimaxi.com
+Referer: https://platform.minimaxi.com/
+User-Agent: <desktop Chrome / Edge UA>
 ```
 
-当前项目已包含完整 `package.json`，正常使用只需：
+If `MINIMAX_COOKIE` is provided in `.env`, the entire `Cookie:` header is reused
+verbatim — useful when the session depends on tracking cookies the API also inspects.
 
-```bash
-npm install
-npm run dev
-```
+### Resolving credentials (development)
 
-## 常用命令
+1. Open <https://www.minimaxi.com> in a browser while logged in.
+2. Copy the `_token` cookie value into `MINIMAX_TOKEN`.
+3. Copy the `minimax_group_id_v2` cookie value into `MINIMAX_GROUP_ID`.
+4. Save `.env` and restart the app (or save through **Settings → Credentials**, which
+   uses the OS keychain instead of the dotenv fallback).
 
-```bash
-# 开发模式：同时启动 Vite、Electron TypeScript watch 和 Electron
-npm run dev
+## Configuration
 
-# ESLint
-npm run lint
+Two layers are merged at startup:
 
-# TypeScript 类型检查
-npm run typecheck
+1. **Persistent (OS keychain)** — `electron/config/store.ts` reads
+   `<userData>/minimax-config.json`. The token + cookie are stored as `safeStorage`
+   ciphertext (base64). The Settings page can update or clear them at runtime
+   (`electron/ipc/config.ts`).
+2. **`.env` fallback** — `electron/config.ts` loads `.env` (or the packaged
+   `process.resourcesPath/.env` when running from a packaged build) and falls back to it
+   when the keychain has no value yet. `MINIMAX_BASE_URL` always wins if present in the
+   environment, so packaged builds can override the URL without touching the saved
+   preferences.
 
-# 构建 renderer 和 Electron main/preload
-npm run build
+If `safeStorage.isEncryptionAvailable()` is `false` (no macOS Keychain, Windows Credential
+Vault, or Linux Secret Service), credential writes are refused instead of being written
+to disk in plaintext, and the Settings page renders an inline warning.
 
-# 当前平台安装包
-npm run dist
+## Refresh & visibility
 
-# Windows NSIS 安装包
-npm run dist:win
+`src/lib/refreshReliability.ts` exposes `createRefreshScheduler` which:
 
-# macOS DMG 安装包
-npm run dist:mac
-```
+- polls every `intervalMs` (`10 s`, `30 s`, `60 s`, `5 min` — chosen in Settings, stored
+  in `localStorage`),
+- listens to `document.visibilitychange` and pauses while the page is hidden,
+- coalesces concurrent requests via `createSingleFlight`,
+- applies `getRetryDelay(failureCount)` exponential backoff on errors.
 
-Windows 安装包应在 Windows 主机生成，macOS DMG 应在 macOS 主机生成。产物输出到 `release/`。
+The Zustand store (`src/store/tokenStore.ts`) maps API snapshots to renderer-friendly
+state (`percentage`, `status`, `error`, `errorCode`, `nextPollAt`, `quotaResetAt`).
 
-## 项目结构
+## Project layout
 
 ```text
 token-orb/
@@ -74,18 +124,47 @@ token-orb/
 │   ├── icon.png
 │   └── tray.png
 ├── electron/
+│   ├── api/
+│   │   ├── minimax.ts         # MiniMax fetchTokenPlan implementation
+│   │   └── minimax.test.ts
+│   ├── config/
+│   │   ├── persistence.ts     # config schema + validation
+│   │   ├── store.ts           # safeStorage-backed disk read/write
+│   │   └── persistence.test.ts
 │   ├── ipc/
-│   │   └── token.ts
-│   ├── main.ts
-│   ├── preload.ts
-│   ├── tray.ts
-│   └── window.ts
+│   │   ├── config.ts          # config:get / config:save handlers
+│   │   └── token.ts           # token:get / token:update / token:fetch handlers
+│   ├── shared/
+│   │   ├── token.ts           # IPC payload types + createMockTokenPlanSnapshot
+│   │   └── token.test.ts
+│   ├── window/
+│   │   ├── geometry.ts        # drag/clamp math
+│   │   ├── persistence.ts     # position schema
+│   │   ├── store.ts           # disk read/write for position
+│   │   ├── geometry.test.ts
+│   │   └── persistence.test.ts
+│   ├── config.ts              # runtime config + .env fallback
+│   ├── main.ts                # app lifecycle, single-instance lock
+│   ├── preload.ts             # contextBridge whitelist
+│   ├── tray.ts                # tray menu
+│   └── window.ts              # BrowserWindow state machine
+├── scripts/
+│   ├── smoke-fetch.mjs        # smoke test → fetches one snapshot via fetchTokenPlan
+│   └── smoke-dump.mjs         # smoke test → dumps the raw snapshot as JSON
 ├── src/
 │   ├── api/
-│   │   └── token.ts
+│   │   └── token.ts           # renderer-side fetchTokenPlan + mock fallback
 │   ├── components/
 │   │   ├── TokenBall.tsx
 │   │   └── TokenPanel.tsx
+│   ├── i18n/
+│   │   └── index.ts           # en/zh dictionary + useT hook
+│   ├── lib/
+│   │   ├── balanceColor.ts
+│   │   ├── refreshReliability.ts
+│   │   ├── refreshReliability.test.ts
+│   │   ├── theme.ts
+│   │   └── balanceColor.test.ts
 │   ├── pages/
 │   │   └── Settings.tsx
 │   ├── store/
@@ -98,6 +177,7 @@ token-orb/
 ├── eslint.config.mjs
 ├── index.html
 ├── package.json
+├── scripts/
 ├── tsconfig.app.json
 ├── tsconfig.electron.json
 ├── tsconfig.json
@@ -105,43 +185,136 @@ token-orb/
 └── vite.config.ts
 ```
 
-## 进程结构
+## Process architecture
 
 ```text
-Electron main
-  ├── BrowserWindow / Tray / Login Item
-  └── ipcMain
-          │
-          │ contextBridge 白名单 API
-          ▼
-React renderer
-  ├── src/api/token.ts
-  ├── Zustand tokenStore
-  └── TokenBall / TokenPanel / Settings
+Electron main                        ┌──────────────────────────────────────┐
+  ├── BrowserWindow (state machine)  │  Renderer (sandboxed React)          │
+  ├── Tray (Show / Settings / Login) │  ├── TokenBall  (96×96 collapsed)    │
+  ├── Single-instance lock           │  ├── TokenPanel (340×560 expanded)  │
+  ├── safeStorage-backed config      │  ├── Settings   (340×660 settings)  │
+  └── ipcMain                        │  └── Zustand tokenStore              │
+        │                            └──────────────────────────────────────┘
+        │ contextBridge whitelist via preload.ts
+        ▼
+   electronAPI: {
+     getTokenBalance, updateTokenBalance, fetchTokenPlan,
+     getConfigStatus, saveConfig,
+     setWindowState, getAutoLaunch, setAutoLaunch,
+     beginWindowDrag, endWindowDrag, showWindow, hideWindow, quitApp,
+     onViewChange,
+   }
 ```
 
-渲染进程启用了 `contextIsolation`，禁用了 `nodeIntegration`，只通过 `electron/preload.ts` 暴露受控 API。
+## Installation
 
-## Mock 数据与真实 API
+### Requirements
 
-`electron/ipc/token.ts` 当前返回以下初始 Mock 数据，并每 15 秒轻微增加已用量：
+- Node.js `20.19+` (`engines.node` in `package.json`)
+- npm `10+` (ships with the supported Node releases)
+- Windows 10 / 11 or macOS
 
-```json
-{
-  "total": 1000000,
-  "used": 300000,
-  "remaining": 700000
-}
+### Bootstrapping
+
+```bash
+git clone <repo> token-orb
+cd token-orb
+npm install
+cp .env.example .env       # then edit MINIMAX_TOKEN / MINIMAX_GROUP_ID
+npm run dev
 ```
 
-Renderer 统一通过 `src/api/token.ts` 的 `getTokenBalance()` 获取数据。接入 OpenAI、Claude 或自定义 API 时，建议保留该返回结构，并将真实网络请求放在 Electron 主进程中，再通过 preload 白名单传回 renderer。
+The first `npm run dev` runs Vite (renderer) on `127.0.0.1:44129`, watches
+`tsconfig.electron.json` for the main/preload, and starts Electron pointing at the dev
+URL.
 
-设置页的 API Key 仅是第一阶段 Mock 占位，保存在本机 `localStorage`，不会发起真实请求。接入生产 API 时应改用操作系统凭据存储，不要把真实密钥保存在 renderer 或提交到 Git。
+## Commands
 
-## 窗口与托盘操作
+```bash
+# ─── development ───────────────────────────────────────────────────────
+npm run dev                # vite + electron watch + electron app
 
-- 按住悬浮球拖动可移动窗口。
-- 单击悬浮球展开详情面板。
-- 面板中的 `×` 折叠回悬浮球。
-- `Hide` 隐藏窗口，可从系统托盘重新显示。
-- 托盘菜单可打开设置、切换开机启动或退出应用。
+# ─── quality gates ─────────────────────────────────────────────────────
+npm test                   # vitest run (all *.test.ts files)
+npm run lint               # eslint .
+npm run typecheck          # tsc -b (renderer + electron project references)
+npm run build              # lint + tsc -b + vite build + electron tsc
+npm run format             # prettier --write .
+npm run format:check       # prettier --check .
+
+# ─── live MiniMax smoke tests (require MINIMAX_TOKEN in .env) ──────────
+npm run smoke              # one-line summary per model
+npm run smoke:dump         # full snapshot JSON
+
+# ─── packaging ─────────────────────────────────────────────────────────
+npm run dist               # current platform (electron-builder)
+npm run dist:win           # Windows NSIS .exe (build on Windows)
+npm run dist:mac           # macOS DMG (universal) — build on macOS
+```
+
+`release/` is the default packaging output directory.
+
+### Smoke tests in detail
+
+`scripts/smoke-fetch.mjs` is the canonical smoke test: it loads `.env`, calls the
+**production** `fetchTokenPlan` from `dist-electron/api/minimax.js`, and prints one
+line per `model_remains` entry:
+
+```
+[smoke] model=general used=30% remaining=70% weekly=12% total=100% resetAt=1750000000
+```
+
+`scripts/smoke-dump.mjs` calls the same production implementation but emits the entire
+`TokenPlanSnapshot` as JSON (handy when you want to inspect every field, including
+`model_remains` arrays with multiple entries).
+
+Both scripts share the same authentication surface — the divergent
+`Authorization: Bearer …` request from the legacy `smoke-dump.mjs` has been removed
+in favour of the cookie-based browser-shape request the running app uses.
+
+## Packaging
+
+`electron-builder.yml` produces:
+
+- **Windows** — NSIS `.exe`, `perMachine: false`, `oneClick: false`,
+  `allowToChangeInstallationDirectory: true`, x64.
+- **macOS** — universal `.dmg`, `category: public.app-category.utilities`.
+
+`build/icon.png` is reused as the tray icon for the orb itself (resized to 16 px on
+the fly) and `build/tray.png` becomes the menu bar / system tray glyph.
+
+Build outputs land in `release/`. The Windows NSIS installer must be produced on a
+Windows host; macOS DMG must be produced on macOS.
+
+## Credential & security cautions
+
+- **Never commit `.env`.** `.env` is git-ignored; `.env.example` is the only template.
+- **Never paste credentials into issues, screenshots, or chat logs.** The runtime
+  truncates them in logs (`[token:fetch] MiniMax …`), and the smoke scripts print only
+  `tokenLength` / `cookieOverride` byte counts.
+- The renderer never receives stored secrets. After `saveConfig` succeeds, the inputs
+  are cleared from form state and the next `getConfigStatus` only reports boolean
+  "configured" flags.
+- `safeStorage` is platform-specific. macOS uses the Keychain, Windows uses the
+  Credential Vault (DPAPI), Linux uses libsecret. If none of those is available,
+  `electron/config/store.ts` refuses to persist plaintext, and the Settings page
+  disables the **Save** button.
+- The MiniMax API client validates `baseUrl` aggressively (`electron/api/minimax.ts` —
+  `validateBaseUrl`) and refuses empty / non-http(s) / loopback-less URLs.
+
+## Environment variables
+
+| Name               | Required | Purpose                                               |
+| ------------------ | -------- | ----------------------------------------------------- |
+| `MINIMAX_TOKEN`    | optional | `_token` cookie value (development fallback only)     |
+| `MINIMAX_GROUP_ID` | optional | `minimax_group_id_v2` cookie value                    |
+| `MINIMAX_BASE_URL` | optional | Override the default `https://www.minimaxi.com`       |
+| `MINIMAX_COOKIE`   | optional | Full `Cookie:` header — overrides the per-name values |
+
+When `MINIMAX_TOKEN` is unset (and no credential is saved in the OS keychain) the app
+falls back to a deterministic mock so the UI keeps animating. The panel surfaces a
+"Mock Data" status dot in that case.
+
+## License
+
+Add your license of choice here before publishing.

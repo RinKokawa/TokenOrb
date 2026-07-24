@@ -1,9 +1,4 @@
-export type RefreshErrorCode =
-  | 'unauthorized'
-  | 'timeout'
-  | 'network'
-  | 'response'
-  | 'unknown';
+export type RefreshErrorCode = 'unauthorized' | 'timeout' | 'network' | 'response' | 'unknown';
 
 export type RefreshFailureStatus = 'unauthorized' | 'offline';
 
@@ -63,7 +58,9 @@ export const getRetryDelay = (failureCount: number): number => {
   return Math.min(retryMaxDelayMs, retryBaseDelayMs * 2 ** exponent);
 };
 
-export const createSingleFlight = <Result>(task: () => Promise<Result>): (() => Promise<Result>) => {
+export const createSingleFlight = <Result>(
+  task: () => Promise<Result>,
+): (() => Promise<Result>) => {
   let inFlight: Promise<Result> | null = null;
 
   return () => {

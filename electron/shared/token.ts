@@ -24,9 +24,7 @@ export type WindowState = 'collapsed' | 'expanded' | 'settings';
 export type WindowViewListener = (view: WindowState) => void;
 
 export type ConfigSecretUpdate =
-  | { kind: 'keep' }
-  | { kind: 'replace'; value: string | null }
-  | { kind: 'clear' };
+  { kind: 'keep' } | { kind: 'replace'; value: string | null } | { kind: 'clear' };
 
 export interface PublicConfigStatus {
   baseUrl: string;
@@ -44,8 +42,7 @@ export interface ConfigSaveInput {
 }
 
 export type ConfigSaveResult =
-  | { ok: true; status: PublicConfigStatus }
-  | { ok: false; error: string };
+  { ok: true; status: PublicConfigStatus } | { ok: false; error: string };
 
 export interface ElectronApi {
   getTokenBalance: () => Promise<TokenBalance>;

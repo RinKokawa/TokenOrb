@@ -14,6 +14,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "smoke": "node scripts/smoke-fetch.mjs",
+    "smoke:dump": "node scripts/smoke-dump.mjs",
     "dist": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder",
     "dist:win": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder --win nsis",
     "dist:mac": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder --mac dmg"

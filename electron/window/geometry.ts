@@ -18,11 +18,7 @@ export const computeDragPosition = (
   y: startBounds.y + cursor.y - startCursor.y,
 });
 
-export const clampPointToWorkArea = (
-  point: Point,
-  size: Size,
-  workArea: WorkArea,
-): Point => ({
+export const clampPointToWorkArea = (point: Point, size: Size, workArea: WorkArea): Point => ({
   x: clamp(point.x, workArea.x, workArea.x + workArea.width - size.width),
   y: clamp(point.y, workArea.y, workArea.y + workArea.height - size.height),
 });

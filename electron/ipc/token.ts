@@ -14,11 +14,7 @@ import {
   type TokenBalance,
   type TokenPlanSnapshot,
 } from '../shared/token';
-import {
-  fetchTokenPlan,
-  InvalidResponseError,
-  InvalidTokenError,
-} from '../api/minimax';
+import { fetchTokenPlan, InvalidResponseError, InvalidTokenError } from '../api/minimax';
 
 const initialBalance: TokenBalance = {
   totalPercent: 100,

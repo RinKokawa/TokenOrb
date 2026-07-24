@@ -1,15 +1,8 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
 import { useTokenStore } from '../store/tokenStore';
-import {
-  getBalanceRingBgClass,
-  getBalanceStroke,
-  getBalanceTextClass,
-} from '../lib/balanceColor';
-import {
-  normalizeRefreshError,
-  type RefreshErrorCode,
-} from '../lib/refreshReliability';
+import { getBalanceRingBgClass, getBalanceStroke, getBalanceTextClass } from '../lib/balanceColor';
+import { normalizeRefreshError, type RefreshErrorCode } from '../lib/refreshReliability';
 import { getLang, setLang, type Lang, useT } from '../i18n';
 
 type TokenPanelProps = {
@@ -19,10 +12,7 @@ type TokenPanelProps = {
   onSettings: () => void;
 };
 
-type ManualRefreshFeedback =
-  | { kind: 'success' }
-  | { kind: 'error'; code: RefreshErrorCode }
-  | null;
+type ManualRefreshFeedback = { kind: 'success' } | { kind: 'error'; code: RefreshErrorCode } | null;
 
 const numberFormatter = new Intl.NumberFormat('en-US');
 
@@ -54,16 +44,8 @@ const statusDotMap: Record<StatusKey, string> = {
 const langOptions: Lang[] = ['en', 'zh'];
 
 export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPanelProps) => {
-  const {
-    snapshot,
-    percentage,
-    totalPercent,
-    isLoading,
-    lastFetchedAt,
-    status,
-    error,
-    errorCode,
-  } = useTokenStore();
+  const { snapshot, percentage, totalPercent, isLoading, lastFetchedAt, status, error, errorCode } =
+    useTokenStore();
   const t = useT();
   const shouldReduceMotion = useReducedMotion();
   const [refreshFeedback, setRefreshFeedback] = useState<ManualRefreshFeedback>(null);
@@ -236,9 +218,7 @@ export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPane
           <p
             role={refreshFeedback?.kind === 'error' ? 'alert' : 'status'}
             className={`panel-feedback mt-2 ${
-              refreshFeedback?.kind === 'error'
-                ? 'panel-feedback-error'
-                : 'panel-feedback-success'
+              refreshFeedback?.kind === 'error' ? 'panel-feedback-error' : 'panel-feedback-success'
             }`}
           >
             {feedbackMessage}

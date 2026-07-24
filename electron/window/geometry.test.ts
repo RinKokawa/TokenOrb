@@ -68,39 +68,47 @@ describe('clampPointToWorkArea', () => {
   const size = { width: 96, height: 96 };
 
   it('keeps a fully inside top-left point unchanged', () => {
-    expect(clampPointToWorkArea({ x: 500, y: 500 }, size, {
-      x: 0,
-      y: 0,
-      width: 1920,
-      height: 1080,
-    })).toEqual({ x: 500, y: 500 });
+    expect(
+      clampPointToWorkArea({ x: 500, y: 500 }, size, {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }),
+    ).toEqual({ x: 500, y: 500 });
   });
 
   it('clamps an overflowing point against the bottom-right edge', () => {
-    expect(clampPointToWorkArea({ x: 2000, y: 1200 }, size, {
-      x: 0,
-      y: 0,
-      width: 1920,
-      height: 1080,
-    })).toEqual({ x: 1824, y: 984 });
+    expect(
+      clampPointToWorkArea({ x: 2000, y: 1200 }, size, {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }),
+    ).toEqual({ x: 1824, y: 984 });
   });
 
   it('clamps against a negative-origin workArea', () => {
-    expect(clampPointToWorkArea({ x: -2100, y: -1200 }, size, {
-      x: -1920,
-      y: -1080,
-      width: 1920,
-      height: 1080,
-    })).toEqual({ x: -1920, y: -1080 });
+    expect(
+      clampPointToWorkArea({ x: -2100, y: -1200 }, size, {
+        x: -1920,
+        y: -1080,
+        width: 1920,
+        height: 1080,
+      }),
+    ).toEqual({ x: -1920, y: -1080 });
   });
 
   it('keeps a negative point within a negative-origin workArea', () => {
-    expect(clampPointToWorkArea({ x: -1500, y: -500 }, size, {
-      x: -1920,
-      y: -1080,
-      width: 1920,
-      height: 1080,
-    })).toEqual({ x: -1500, y: -500 });
+    expect(
+      clampPointToWorkArea({ x: -1500, y: -500 }, size, {
+        x: -1920,
+        y: -1080,
+        width: 1920,
+        height: 1080,
+      }),
+    ).toEqual({ x: -1500, y: -500 });
   });
 });
 

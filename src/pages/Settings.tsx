@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTokenStore } from '../store/tokenStore';
-import {
-  normalizeRefreshError,
-  type RefreshErrorCode,
-} from '../lib/refreshReliability';
+import { normalizeRefreshError, type RefreshErrorCode } from '../lib/refreshReliability';
 import { getStoredTheme, setStoredTheme, type Theme } from '../lib/theme';
 import { useT } from '../i18n';
 import type { ConfigSaveInput, PublicConfigStatus } from '../../electron/shared/token';
 
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
-type ManualRefreshFeedback =
-  | { kind: 'success' }
-  | { kind: 'error'; code: RefreshErrorCode }
-  | null;
+type ManualRefreshFeedback = { kind: 'success' } | { kind: 'error'; code: RefreshErrorCode } | null;
 
 type SettingsProps = {
   refreshInterval: number;
@@ -89,7 +83,9 @@ export const Settings = ({
     try {
       const next = await window.electronAPI.getConfigStatus();
       setConfigStatus(next);
-      setBaseUrlInput((current) => (current === '' || current === next.baseUrl ? next.baseUrl : current));
+      setBaseUrlInput((current) =>
+        current === '' || current === next.baseUrl ? next.baseUrl : current,
+      );
       setGroupIdInput((current) => {
         if (current !== '') return current;
         return next.groupId ?? '';
@@ -412,9 +408,7 @@ export const Settings = ({
         </form>
 
         <label className="block">
-          <span className="panel-text-strong text-sm font-medium">
-            {t('settings.refreshFreq')}
-          </span>
+          <span className="panel-text-strong text-sm font-medium">{t('settings.refreshFreq')}</span>
           <select
             value={refreshInterval}
             className="panel-input mt-3 w-full rounded-lg px-3 py-2 text-sm"

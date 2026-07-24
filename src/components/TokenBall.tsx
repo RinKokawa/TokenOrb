@@ -157,9 +157,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
             strokeWidth="4"
             strokeDasharray={circumference}
             animate={{ stroke: ringColor, strokeDashoffset: dashOffset }}
-            transition={
-              shouldReduceMotion ? { duration: 0 } : { duration: 0.8, ease: 'easeOut' }
-            }
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8, ease: 'easeOut' }}
           />
         </svg>
         <span className="relative flex flex-col items-center leading-none">

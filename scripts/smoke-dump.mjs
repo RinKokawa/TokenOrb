@@ -1,6 +1,11 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
+import {
+  fetchTokenPlan,
+  InvalidResponseError,
+  InvalidTokenError,
+} from '../dist-electron/api/minimax.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(here, '..');
@@ -9,34 +14,36 @@ loadEnv({ path: path.join(projectRoot, '.env') });
 const token = process.env.MINIMAX_TOKEN?.trim();
 const groupId = process.env.MINIMAX_GROUP_ID?.trim() || null;
 const baseUrl = process.env.MINIMAX_BASE_URL?.trim() || 'https://www.minimaxi.com';
+const cookieOverride = process.env.MINIMAX_COOKIE?.trim() || null;
 
 if (!token) {
   console.error('MINIMAX_TOKEN is not set in .env');
   process.exit(2);
 }
 
-const url = new URL('/backend/account/token_plan/remains_percent', baseUrl).toString();
-const headers = {
-  Authorization: `Bearer ${token}`,
-  Accept: 'application/json, text/plain, */*',
-  'User-Agent': 'token-orb/0.1 (+electron)',
-};
-if (groupId) headers['X-Group-Id'] = groupId;
+console.log(`[dump] baseUrl=${baseUrl} groupId=${groupId ?? '—'} tokenLength=${token.length}`);
+console.log(
+  `[dump] cookieOverride=${cookieOverride ? `<${cookieOverride.length} bytes>` : '— (using _token cookie)'}`,
+);
 
-const controller = new AbortController();
-const timer = setTimeout(() => controller.abort(), 8_000);
-
-const start = Date.now();
 try {
-  const response = await fetch(url, { method: 'GET', headers, signal: controller.signal });
-  const elapsed = Date.now() - start;
-  const text = await response.text();
-  console.log(`[dump] status=${response.status} elapsed=${elapsed}ms`);
-  console.log(`[dump] headers:`);
-  for (const [k, v] of response.headers.entries()) console.log(`  ${k}: ${v}`);
-  console.log(`[dump] body=${text}`);
+  const snapshot = await fetchTokenPlan({ baseUrl, token, groupId, cookieOverride });
+  console.log(`[dump] fetchedAt=${new Date(snapshot.fetchedAt).toISOString()}`);
+  console.log(`[dump] url=${snapshot.baseUrl}`);
+  console.log(`[dump] primary=${snapshot.primary?.model ?? '—'}`);
+  console.log(
+    `[dump] remainingPercent=${snapshot.primary?.remainingPercent ?? '—'} usedPercent=${snapshot.primary?.usedPercent ?? '—'} weeklyUsedPercent=${snapshot.primary?.weeklyUsedPercent ?? '—'} resetAt=${snapshot.primary?.resetAt ?? '—'}`,
+  );
+  console.log(`[dump] snapshot=`, JSON.stringify(snapshot, null, 2));
 } catch (error) {
-  console.error('[dump] network error:', error);
-} finally {
-  clearTimeout(timer);
+  if (error instanceof InvalidTokenError) {
+    console.error(`[dump] invalid token: ${error.message}`);
+    process.exit(1);
+  }
+  if (error instanceof InvalidResponseError) {
+    console.error(`[dump] invalid response: ${error.message}`);
+    process.exit(1);
+  }
+  console.error('[dump] unexpected error', error);
+  process.exit(1);
 }

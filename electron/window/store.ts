@@ -8,8 +8,7 @@ import {
   type PersistedPosition,
 } from './persistence';
 
-const resolvePositionPath = (): string =>
-  path.join(app.getPath('userData'), POSITION_FILE_NAME);
+const resolvePositionPath = (): string => path.join(app.getPath('userData'), POSITION_FILE_NAME);
 
 export const loadPersistedPositionFromDisk = (): PersistedPosition | null => {
   const filePath = resolvePositionPath();

@@ -1,7 +1,11 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
-import { fetchTokenPlan, InvalidTokenError, InvalidResponseError } from '../dist-electron/api/minimax.js';
+import {
+  fetchTokenPlan,
+  InvalidTokenError,
+  InvalidResponseError,
+} from '../dist-electron/api/minimax.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(here, '..');
@@ -18,14 +22,16 @@ if (!token) {
 }
 
 console.log(`[smoke] baseUrl=${baseUrl} groupId=${groupId ?? '—'} tokenLength=${token.length}`);
-console.log(`[smoke] cookieOverride=${cookieOverride ? `<${cookieOverride.length} bytes>` : '— (using JWT as _token)'}`);
+console.log(
+  `[smoke] cookieOverride=${cookieOverride ? `<${cookieOverride.length} bytes>` : '— (using JWT as _token)'}`,
+);
 
 try {
   const snapshot = await fetchTokenPlan({ baseUrl, token, groupId, cookieOverride });
   console.log(`[smoke] fetchedAt=${new Date(snapshot.fetchedAt).toISOString()}`);
   for (const model of snapshot.models) {
     console.log(
-      `[smoke] model=${model.model} used=${model.usedPercent}% remains=${model.remainsPercent}% weekly=${model.weeklyUsedPercent}% total=${model.totalPercent}% resetAt=${model.resetAt}`,
+      `[smoke] model=${model.model} used=${model.usedPercent}% remaining=${model.remainingPercent}% weekly=${model.weeklyUsedPercent}% total=${model.totalPercent}% resetAt=${model.resetAt}`,
     );
   }
 } catch (error) {

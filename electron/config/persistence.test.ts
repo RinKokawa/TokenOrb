@@ -111,7 +111,12 @@ describe('normalizeBaseUrl', () => {
 describe('mergeConfigUpdate', () => {
   it('keeps the existing secret when token.kind === keep', () => {
     const previous = { ...baseConfig(), tokenCipher: 'opaque-ciphertext' } as PersistedConfig;
-    const update = { baseUrl: 'https://www.minimaxi.com', groupId: null, token: { kind: 'keep' } as SecretUpdate, cookieOverride: { kind: 'keep' } as SecretUpdate };
+    const update = {
+      baseUrl: 'https://www.minimaxi.com',
+      groupId: null,
+      token: { kind: 'keep' } as SecretUpdate,
+      cookieOverride: { kind: 'keep' } as SecretUpdate,
+    };
 
     const merged = mergeConfigUpdate(previous, update);
     expect(merged.tokenCipher).toBe('opaque-ciphertext');
@@ -120,7 +125,12 @@ describe('mergeConfigUpdate', () => {
 
   it('replaces the secret when token.kind === replace with a value', () => {
     const previous = { ...baseConfig(), tokenCipher: 'opaque-ciphertext' } as PersistedConfig;
-    const update = { baseUrl: 'https://www.minimaxi.com', groupId: null, token: replace('new-cipher'), cookieOverride: { kind: 'keep' } as SecretUpdate };
+    const update = {
+      baseUrl: 'https://www.minimaxi.com',
+      groupId: null,
+      token: replace('new-cipher'),
+      cookieOverride: { kind: 'keep' } as SecretUpdate,
+    };
 
     const merged = mergeConfigUpdate(previous, update);
     expect(merged.tokenCipher).toBe('new-cipher');
@@ -128,7 +138,12 @@ describe('mergeConfigUpdate', () => {
 
   it('clears the secret when token.kind === clear', () => {
     const previous = { ...baseConfig(), tokenCipher: 'opaque-ciphertext' } as PersistedConfig;
-    const update = { baseUrl: 'https://www.minimaxi.com', groupId: null, token: { kind: 'clear' } as SecretUpdate, cookieOverride: { kind: 'clear' } as SecretUpdate };
+    const update = {
+      baseUrl: 'https://www.minimaxi.com',
+      groupId: null,
+      token: { kind: 'clear' } as SecretUpdate,
+      cookieOverride: { kind: 'clear' } as SecretUpdate,
+    };
 
     const merged = mergeConfigUpdate(previous, update);
     expect(merged.tokenCipher).toBeNull();
@@ -137,7 +152,12 @@ describe('mergeConfigUpdate', () => {
 
   it('clears the secret when token.kind === replace with null', () => {
     const previous = { ...baseConfig(), cookieCipher: 'opaque' } as PersistedConfig;
-    const update = { baseUrl: 'https://www.minimaxi.com', groupId: null, token: replace(null), cookieOverride: { kind: 'keep' } as SecretUpdate };
+    const update = {
+      baseUrl: 'https://www.minimaxi.com',
+      groupId: null,
+      token: replace(null),
+      cookieOverride: { kind: 'keep' } as SecretUpdate,
+    };
 
     const merged = mergeConfigUpdate(previous, update);
     expect(merged.tokenCipher).toBeNull();
@@ -146,7 +166,12 @@ describe('mergeConfigUpdate', () => {
 
   it('updates baseUrl and groupId while keeping secrets unchanged', () => {
     const previous = { ...baseConfig(), tokenCipher: 'opaque' } as PersistedConfig;
-    const update = { baseUrl: 'https://override.example.com', groupId: 'new-group', token: { kind: 'keep' } as SecretUpdate, cookieOverride: { kind: 'keep' } as SecretUpdate };
+    const update = {
+      baseUrl: 'https://override.example.com',
+      groupId: 'new-group',
+      token: { kind: 'keep' } as SecretUpdate,
+      cookieOverride: { kind: 'keep' } as SecretUpdate,
+    };
 
     const merged = mergeConfigUpdate(previous, update);
     expect(merged.baseUrl).toBe('https://override.example.com');
@@ -179,7 +204,13 @@ describe('buildConfigStatus', () => {
     const status: PublicConfigStatus = buildConfigStatus(config, true);
     const keys = Object.keys(status).sort();
 
-    expect(keys).toEqual(['baseUrl', 'cookieConfigured', 'groupId', 'storageAvailable', 'tokenConfigured']);
+    expect(keys).toEqual([
+      'baseUrl',
+      'cookieConfigured',
+      'groupId',
+      'storageAvailable',
+      'tokenConfigured',
+    ]);
     expect(status).toEqual({
       baseUrl: 'https://www.minimaxi.com',
       groupId: '2013606000870826167',

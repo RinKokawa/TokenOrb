@@ -39,7 +39,8 @@ const dicts: Record<Lang, Dict> = {
     'status.mock': 'Mock Data',
     'status.unauthorized': 'Token Invalid',
     'status.offline': 'Offline',
-    'refresh.error.unauthorized': 'Authentication failed. Check your MiniMax credentials and try again.',
+    'refresh.error.unauthorized':
+      'Authentication failed. Check your MiniMax credentials and try again.',
     'refresh.error.timeout': 'MiniMax took too long to respond. Try again.',
     'refresh.error.network': 'Unable to reach MiniMax. Check your connection and try again.',
     'refresh.error.response': 'MiniMax returned an unexpected response. Try again.',
@@ -73,7 +74,8 @@ const dicts: Record<Lang, Dict> = {
     'settings.status.loading': 'Loading…',
     'settings.status.idle': 'Idle',
     'settings.config.title': 'Credentials',
-    'settings.config.hint': 'Save securely using your OS keychain. Leaving a field empty keeps its current value; clearing removes it.',
+    'settings.config.hint':
+      'Save securely using your OS keychain. Leaving a field empty keeps its current value; clearing removes it.',
     'settings.config.unavailable': 'Electron API is not available in this environment.',
     'settings.config.storageMissing':
       'Encrypted storage is unavailable on this machine. Credentials will not be saved.',
@@ -163,8 +165,7 @@ const dicts: Record<Lang, Dict> = {
     'settings.config.title': '凭据',
     'settings.config.hint': '使用操作系统的密钥链安全保存。保留为空表示维持当前值，清空表示移除。',
     'settings.config.unavailable': '当前环境未注入 Electron API。',
-    'settings.config.storageMissing':
-      '本机无可用的加密存储，凭据将不会被保存。',
+    'settings.config.storageMissing': '本机无可用的加密存储，凭据将不会被保存。',
     'settings.config.baseUrlLabel': '接口地址',
     'settings.config.groupIdLabel': '群组 ID',
     'settings.config.groupIdPlaceholder': '例如 1234567890123456789',
@@ -233,10 +234,7 @@ const interpolate = (template: string, vars: Record<string, string | number>): s
   );
 };
 
-export const useT = (): ((
-  key: string,
-  vars?: Record<string, string | number>,
-) => string) => {
+export const useT = (): ((key: string, vars?: Record<string, string | number>) => string) => {
   const lang = useLang();
   return (key, vars) => {
     const template = dicts[lang][key] ?? dicts.en[key] ?? key;

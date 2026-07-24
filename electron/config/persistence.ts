@@ -11,9 +11,7 @@ export type PersistedConfig = {
 };
 
 export type SecretUpdate =
-  | { kind: 'keep' }
-  | { kind: 'replace'; value: string | null }
-  | { kind: 'clear' };
+  { kind: 'keep' } | { kind: 'replace'; value: string | null } | { kind: 'clear' };
 
 export type ConfigSaveInput = {
   baseUrl: string;

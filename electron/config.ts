@@ -1,10 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { app } from 'electron';
-import {
-  CONFIG_DEFAULT_BASE_URL,
-  type PersistedConfig,
-} from './config/persistence';
+import { CONFIG_DEFAULT_BASE_URL, type PersistedConfig } from './config/persistence';
 import {
   decryptPersistedConfig,
   isSafeStorageAvailable,
@@ -30,9 +27,15 @@ const readEnvValue = (key: string): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-let cachedEnvConfig: Pick<RuntimeConfig, 'baseUrl' | 'token' | 'groupId' | 'cookieOverride'> | null = null;
+let cachedEnvConfig: Pick<
+  RuntimeConfig,
+  'baseUrl' | 'token' | 'groupId' | 'cookieOverride'
+> | null = null;
 
-const loadEnvFallback = (): Pick<RuntimeConfig, 'baseUrl' | 'token' | 'groupId' | 'cookieOverride'> => {
+const loadEnvFallback = (): Pick<
+  RuntimeConfig,
+  'baseUrl' | 'token' | 'groupId' | 'cookieOverride'
+> => {
   if (cachedEnvConfig) return cachedEnvConfig;
   if (app.isPackaged) {
     dotenv.config({ path: path.join(process.resourcesPath, '.env'), override: false });
