@@ -12,35 +12,35 @@ export const classifyBalance = (percentage: number): BalanceLevel => {
 export const getBalanceStroke = (percentage: number): string => {
   switch (classifyBalance(percentage)) {
     case 'full':
-      return '#34d399';
+      return 'var(--balance-full)';
     case 'low':
-      return '#f87171';
+      return 'var(--balance-low)';
     case 'mid':
     default:
-      return '#818cf8';
+      return 'var(--balance-mid)';
   }
 };
 
 export const getBalanceTextClass = (percentage: number): string => {
   switch (classifyBalance(percentage)) {
     case 'full':
-      return 'text-emerald-300';
+      return 'balance-text-full';
     case 'low':
-      return 'text-rose-300';
+      return 'balance-text-low';
     case 'mid':
     default:
-      return 'text-indigo-300';
+      return 'balance-text-mid';
   }
 };
 
 export const getBalanceRingBgClass = (percentage: number): string => {
   switch (classifyBalance(percentage)) {
     case 'full':
-      return 'bg-emerald-500/15';
+      return 'balance-surface-full';
     case 'low':
-      return 'bg-rose-500/15';
+      return 'balance-surface-low';
     case 'mid':
     default:
-      return 'bg-indigo-500/15';
+      return 'balance-surface-mid';
   }
 };

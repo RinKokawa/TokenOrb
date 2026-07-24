@@ -1,10 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { initializeStoredTheme } from './lib/theme';
 import './styles.css';
 
-const storedTheme = window.localStorage.getItem('token-orb:theme');
-document.documentElement.dataset.theme = storedTheme === 'light' ? 'light' : 'dark';
+initializeStoredTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

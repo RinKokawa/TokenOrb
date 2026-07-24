@@ -1,32 +1,41 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTokenStore } from '../store/tokenStore';
+import {
+  normalizeRefreshError,
+  type RefreshErrorCode,
+} from '../lib/refreshReliability';
+import { getStoredTheme, setStoredTheme, type Theme } from '../lib/theme';
 import { useT } from '../i18n';
 import type { ConfigSaveInput, PublicConfigStatus } from '../../electron/shared/token';
 
-type Theme = 'dark' | 'light';
-
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
+
+type ManualRefreshFeedback =
+  | { kind: 'success' }
+  | { kind: 'error'; code: RefreshErrorCode }
+  | null;
 
 type SettingsProps = {
   refreshInterval: number;
   onBack: () => void;
+  onRefresh: () => Promise<void>;
   onRefreshIntervalChange: (value: number) => void;
-};
-
-const getStoredTheme = (): Theme => {
-  const storedTheme = window.localStorage.getItem('token-orb:theme');
-  return storedTheme === 'light' ? 'light' : 'dark';
 };
 
 const isElectronApiAvailable = (): boolean =>
   typeof window !== 'undefined' && typeof window.electronAPI !== 'undefined';
 
-export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: SettingsProps) => {
+export const Settings = ({
+  refreshInterval,
+  onBack,
+  onRefresh,
+  onRefreshIntervalChange,
+}: SettingsProps) => {
   const [theme, setTheme] = useState<Theme>(getStoredTheme);
   const snapshot = useTokenStore((state) => state.snapshot);
   const lastFetchedAt = useTokenStore((state) => state.lastFetchedAt);
   const status = useTokenStore((state) => state.status);
-  const updateToken = useTokenStore((state) => state.updateToken);
+  const isLoading = useTokenStore((state) => state.isLoading);
   const t = useT();
 
   const [configStatus, setConfigStatus] = useState<PublicConfigStatus | null>(null);
@@ -38,10 +47,10 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [refreshFeedback, setRefreshFeedback] = useState<ManualRefreshFeedback>(null);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem('token-orb:theme', theme);
+    setStoredTheme(theme);
   }, [theme]);
 
   useEffect(() => {
@@ -94,8 +103,6 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
   const cookieConfigured = configStatus?.cookieConfigured ?? false;
   const storageAvailable = configStatus?.storageAvailable ?? false;
 
-  const feedbackKey = useMemo<SaveStatus>(() => saveStatus, [saveStatus]);
-
   const handleClearToken = (): void => {
     setTokenInput('');
     setSaveStatus('idle');
@@ -106,6 +113,16 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
     setCookieInput('');
     setSaveStatus('idle');
     setFeedback(null);
+  };
+
+  const handleFetchNow = async (): Promise<void> => {
+    setRefreshFeedback(null);
+    try {
+      await onRefresh();
+      setRefreshFeedback({ kind: 'success' });
+    } catch (refreshError: unknown) {
+      setRefreshFeedback({ kind: 'error', code: normalizeRefreshError(refreshError).code });
+    }
   };
 
   const handleSave = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -169,23 +186,29 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
   const baseUrl = snapshot?.baseUrl ?? '—';
   const modelsCount = snapshot?.models.length ?? 0;
   const statusLine = t(`settings.status.${status}`);
+  const refreshFeedbackMessage =
+    refreshFeedback?.kind === 'success'
+      ? t('settings.fetchSuccess')
+      : refreshFeedback?.kind === 'error'
+        ? t(`refresh.error.${refreshFeedback.code}`)
+        : null;
 
   return (
-    <section className="glass-panel flex max-h-[640px] w-[340px] flex-col overflow-y-auto rounded-2xl p-5 text-slate-200">
+    <section className="glass-panel panel-text flex max-h-[640px] w-[340px] flex-col overflow-y-auto rounded-2xl p-5">
       <header className="flex items-center gap-3">
         <button
           type="button"
           aria-label={t('settings.back')}
-          className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
+          className="panel-icon-button rounded-lg p-2"
           onClick={onBack}
         >
           <span aria-hidden="true">←</span>
         </button>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-indigo-300">
+          <p className="panel-eyebrow text-[10px] font-semibold uppercase tracking-[0.22em]">
             {t('settings.eyebrow')}
           </p>
-          <h1 className="light-text mt-1 text-xl font-semibold tracking-tight">
+          <h1 className="panel-text-strong mt-1 text-xl font-semibold tracking-tight">
             {t('settings.title')}
           </h1>
         </div>
@@ -193,58 +216,73 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
 
       <div className="mt-7 space-y-5">
         <div>
-          <p className="light-text text-sm font-medium">{t('settings.minimax')}</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
+          <p className="panel-text-strong text-sm font-medium">{t('settings.minimax')}</p>
+          <p className="panel-muted mt-1 text-[11px] leading-relaxed">
             {t('settings.tokenHint')}
-            <code className="mx-1 text-indigo-300">.env</code>
+            <code className="panel-code mx-1">.env</code>
             {t('settings.tokenHintAnd')}
-            <code className="mx-1 text-indigo-300">MINIMAX_TOKEN</code>
+            <code className="panel-code mx-1">MINIMAX_TOKEN</code>
             {t('settings.tokenHintTail')}
           </p>
           <dl className="mt-3 space-y-1 text-[11px]">
             <div className="flex items-center justify-between">
-              <dt className="text-[var(--muted)]">{t('settings.baseUrl')}</dt>
-              <dd className="light-text font-medium">{baseUrl}</dd>
+              <dt className="panel-muted">{t('settings.baseUrl')}</dt>
+              <dd className="panel-text-strong font-medium">{baseUrl}</dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="text-[var(--muted)]">{t('settings.models')}</dt>
-              <dd className="light-text font-medium">{modelsCount}</dd>
+              <dt className="panel-muted">{t('settings.models')}</dt>
+              <dd className="panel-text-strong font-medium">{modelsCount}</dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="text-[var(--muted)]">{t('settings.lastFetch')}</dt>
-              <dd className="light-text font-medium">
+              <dt className="panel-muted">{t('settings.lastFetch')}</dt>
+              <dd className="panel-text-strong font-medium">
                 {lastFetchedAt ? new Date(lastFetchedAt).toLocaleTimeString() : '—'}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="text-[var(--muted)]">{t('settings.status')}</dt>
-              <dd className="light-text font-medium">{statusLine}</dd>
+              <dt className="panel-muted">{t('settings.status')}</dt>
+              <dd className="panel-text-strong font-medium">{statusLine}</dd>
             </div>
           </dl>
           <button
             type="button"
-            className="mt-3 w-full rounded-lg bg-indigo-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400"
-            onClick={() => void updateToken().catch(() => undefined)}
+            className="panel-primary-button mt-3 w-full rounded-lg px-3 py-2 text-xs font-semibold"
+            disabled={isLoading}
+            onClick={() => void handleFetchNow()}
           >
-            {t('settings.fetchNow')}
+            {isLoading ? t('settings.fetching') : t('settings.fetchNow')}
           </button>
+          {refreshFeedbackMessage ? (
+            <p
+              role={refreshFeedback?.kind === 'error' ? 'alert' : 'status'}
+              className={`panel-feedback mt-2 ${
+                refreshFeedback?.kind === 'error'
+                  ? 'panel-feedback-error'
+                  : 'panel-feedback-success'
+              }`}
+            >
+              {refreshFeedbackMessage}
+            </p>
+          ) : null}
         </div>
 
-        <form className="space-y-3" onSubmit={(e) => void handleSave(e)}>
+        <form className="space-y-3" onSubmit={(event) => void handleSave(event)}>
           <div>
-            <p className="light-text text-sm font-medium">{t('settings.config.title')}</p>
-            <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
+            <p className="panel-text-strong text-sm font-medium">{t('settings.config.title')}</p>
+            <p className="panel-muted mt-1 text-[11px] leading-relaxed">
               {t('settings.config.hint')}
             </p>
             {!storageAvailable ? (
-              <p className="mt-2 rounded-md border border-rose-400/40 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-200">
+              <p className="panel-feedback panel-feedback-error mt-2">
                 {t('settings.config.storageMissing')}
               </p>
             ) : null}
           </div>
 
           <label className="block">
-            <span className="light-text text-sm font-medium">{t('settings.config.baseUrlLabel')}</span>
+            <span className="panel-text-strong text-sm font-medium">
+              {t('settings.config.baseUrlLabel')}
+            </span>
             <input
               type="url"
               autoComplete="off"
@@ -252,12 +290,14 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
               value={baseUrlInput}
               onChange={(event) => setBaseUrlInput(event.target.value)}
               placeholder="https://www.minimaxi.com"
-              className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
+              className="panel-input mt-2 w-full rounded-lg px-3 py-2 text-sm"
             />
           </label>
 
           <label className="block">
-            <span className="light-text text-sm font-medium">{t('settings.config.groupIdLabel')}</span>
+            <span className="panel-text-strong text-sm font-medium">
+              {t('settings.config.groupIdLabel')}
+            </span>
             <input
               type="text"
               autoComplete="off"
@@ -265,14 +305,20 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
               value={groupIdInput}
               onChange={(event) => setGroupIdInput(event.target.value)}
               placeholder={t('settings.config.groupIdPlaceholder')}
-              className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
+              className="panel-input mt-2 w-full rounded-lg px-3 py-2 text-sm"
             />
           </label>
 
           <div>
             <div className="flex items-center justify-between">
-              <span className="light-text text-sm font-medium">{t('settings.config.tokenLabel')}</span>
-              <span className={`text-[10px] font-medium ${tokenConfigured ? 'text-emerald-300' : 'text-[var(--muted)]'}`}>
+              <span className="panel-text-strong text-sm font-medium">
+                {t('settings.config.tokenLabel')}
+              </span>
+              <span
+                className={`text-[10px] font-medium ${
+                  tokenConfigured ? 'panel-success-text' : 'panel-muted'
+                }`}
+              >
                 {tokenConfigured
                   ? t('settings.config.configured')
                   : t('settings.config.notConfigured')}
@@ -289,14 +335,14 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
                   ? t('settings.config.keepPlaceholder')
                   : t('settings.config.tokenPlaceholder')
               }
-              className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
+              className="panel-input mt-2 w-full rounded-lg px-3 py-2 text-sm"
             />
-            <div className="mt-1 flex items-center justify-between text-[10px] text-[var(--muted)]">
+            <div className="panel-muted mt-1 flex items-center justify-between text-[10px]">
               <span>{t('settings.config.tokenHintRow')}</span>
               <button
                 type="button"
                 onClick={handleClearToken}
-                className="rounded px-2 py-0.5 text-[10px] font-medium text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="panel-clear-button rounded px-2 py-0.5 text-[10px] font-medium"
                 disabled={!tokenConfigured && tokenInput.length === 0}
               >
                 {t('settings.config.clearToken')}
@@ -306,8 +352,14 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
 
           <div>
             <div className="flex items-center justify-between">
-              <span className="light-text text-sm font-medium">{t('settings.config.cookieLabel')}</span>
-              <span className={`text-[10px] font-medium ${cookieConfigured ? 'text-emerald-300' : 'text-[var(--muted)]'}`}>
+              <span className="panel-text-strong text-sm font-medium">
+                {t('settings.config.cookieLabel')}
+              </span>
+              <span
+                className={`text-[10px] font-medium ${
+                  cookieConfigured ? 'panel-success-text' : 'panel-muted'
+                }`}
+              >
                 {cookieConfigured
                   ? t('settings.config.configured')
                   : t('settings.config.notConfigured')}
@@ -324,14 +376,14 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
                   ? t('settings.config.keepPlaceholder')
                   : t('settings.config.cookiePlaceholder')
               }
-              className="mt-2 w-full resize-y rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
+              className="panel-input mt-2 w-full resize-y rounded-lg px-3 py-2 text-sm"
             />
-            <div className="mt-1 flex items-center justify-between text-[10px] text-[var(--muted)]">
+            <div className="panel-muted mt-1 flex items-center justify-between text-[10px]">
               <span>{t('settings.config.cookieHintRow')}</span>
               <button
                 type="button"
                 onClick={handleClearCookie}
-                className="rounded px-2 py-0.5 text-[10px] font-medium text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="panel-clear-button rounded px-2 py-0.5 text-[10px] font-medium"
                 disabled={!cookieConfigured && cookieInput.length === 0}
               >
                 {t('settings.config.clearCookie')}
@@ -340,12 +392,12 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
           </div>
 
           {feedback ? (
-            <p className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200">
+            <p role="status" className="panel-feedback panel-feedback-success">
               {feedback}
             </p>
           ) : null}
           {saveError ? (
-            <p className="rounded-md border border-rose-400/40 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-200">
+            <p role="alert" className="panel-feedback panel-feedback-error">
               {saveError}
             </p>
           ) : null}
@@ -353,17 +405,19 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
           <button
             type="submit"
             disabled={saveStatus === 'saving' || configLoading || !storageAvailable}
-            className="w-full rounded-lg bg-indigo-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60"
+            className="panel-primary-button w-full rounded-lg px-3 py-2 text-xs font-semibold"
           >
-            {feedbackKey === 'saving' ? t('settings.config.saving') : t('settings.config.save')}
+            {saveStatus === 'saving' ? t('settings.config.saving') : t('settings.config.save')}
           </button>
         </form>
 
         <label className="block">
-          <span className="light-text text-sm font-medium">{t('settings.refreshFreq')}</span>
+          <span className="panel-text-strong text-sm font-medium">
+            {t('settings.refreshFreq')}
+          </span>
           <select
             value={refreshInterval}
-            className="mt-3 w-full rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
+            className="panel-input mt-3 w-full rounded-lg px-3 py-2 text-sm"
             onChange={(event) => handleRefreshIntervalChange(Number(event.target.value))}
           >
             <option value={10}>{t('settings.refresh.10')}</option>
@@ -374,16 +428,15 @@ export const Settings = ({ refreshInterval, onBack, onRefreshIntervalChange }: S
         </label>
 
         <fieldset>
-          <legend className="light-text text-sm font-medium">{t('settings.theme')}</legend>
+          <legend className="panel-text-strong text-sm font-medium">{t('settings.theme')}</legend>
           <div className="mt-3 grid grid-cols-2 gap-2">
             {(['dark', 'light'] as const).map((option) => (
               <button
                 key={option}
                 type="button"
-                className={`rounded-lg border px-3 py-2 text-sm transition ${
-                  theme === option
-                    ? 'border-indigo-400 bg-indigo-500/20 text-indigo-200'
-                    : 'border-white/10 bg-white/5 text-[var(--muted)] hover:bg-white/10'
+                aria-pressed={theme === option}
+                className={`panel-theme-button rounded-lg px-3 py-2 text-sm ${
+                  theme === option ? 'panel-theme-button-active' : ''
                 }`}
                 onClick={() => setTheme(option)}
               >

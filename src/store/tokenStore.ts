@@ -5,6 +5,11 @@ import {
   type TokenPlanSnapshot,
   type TokenStatus,
 } from '../api/token';
+import {
+  createSingleFlight,
+  normalizeRefreshError,
+  type RefreshErrorCode,
+} from '../lib/refreshReliability';
 
 export interface TokenState extends TokenBalance {
   percentage: number;
@@ -14,6 +19,7 @@ export interface TokenState extends TokenBalance {
   quotaResetAt: number | null;
   nextPollAt: number | null;
   error: string | null;
+  errorCode: RefreshErrorCode | null;
   isLoading: boolean;
   updateToken: () => Promise<void>;
   setNextPollAt: (timestamp: number | null) => void;
@@ -25,18 +31,9 @@ const initialBalance: TokenBalance = {
   remainingPercent: 0,
 };
 
-export const useTokenStore = create<TokenState>((set) => ({
-  ...initialBalance,
-  percentage: 0,
-  snapshot: null,
-  status: 'idle',
-  lastFetchedAt: null,
-  quotaResetAt: null,
-  nextPollAt: null,
-  error: null,
-  isLoading: false,
-  updateToken: async () => {
-    set({ isLoading: true, status: 'loading', error: null });
+export const useTokenStore = create<TokenState>((set) => {
+  const updateToken = createSingleFlight(async () => {
+    set({ isLoading: true, status: 'loading', error: null, errorCode: null });
 
     try {
       const snapshot = await fetchTokenPlan();
@@ -57,13 +54,26 @@ export const useTokenStore = create<TokenState>((set) => ({
         status: snapshot.baseUrl.startsWith('mock://') ? 'mock' : 'online',
       });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unable to load token plan';
-      const isAuth = /401|403|unauthor/i.test(message);
-      set({ status: isAuth ? 'unauthorized' : 'offline', error: message });
-      throw error;
+      const normalized = normalizeRefreshError(error);
+      set({ status: normalized.status, error: normalized.message, errorCode: normalized.code });
+      throw normalized;
     } finally {
       set({ isLoading: false });
     }
-  },
-  setNextPollAt: (timestamp) => set({ nextPollAt: timestamp }),
-}));
+  });
+
+  return {
+    ...initialBalance,
+    percentage: 0,
+    snapshot: null,
+    status: 'idle',
+    lastFetchedAt: null,
+    quotaResetAt: null,
+    nextPollAt: null,
+    error: null,
+    errorCode: null,
+    isLoading: false,
+    updateToken,
+    setNextPollAt: (timestamp) => set({ nextPollAt: timestamp }),
+  };
+});

@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { TokenBall } from './components/TokenBall';
 import { TokenPanel } from './components/TokenPanel';
 import { Settings } from './pages/Settings';
+import {
+  createRefreshScheduler,
+  type RefreshScheduler,
+  type VisibilitySource,
+} from './lib/refreshReliability';
 import { useTokenStore } from './store/tokenStore';
 import type { WindowState } from '../electron/shared/token';
 
@@ -17,30 +22,40 @@ const setWindowState = (view: WindowState): void => {
   void window.electronAPI?.setWindowState(view);
 };
 
+const documentVisibility: VisibilitySource = {
+  isVisible: () => document.visibilityState === 'visible',
+  subscribe: (listener) => {
+    document.addEventListener('visibilitychange', listener);
+    return () => document.removeEventListener('visibilitychange', listener);
+  },
+};
+
 const App = () => {
   const [view, setView] = useState<WindowState>('collapsed');
   const [refreshInterval, setRefreshInterval] = useState(getStoredRefreshInterval);
+  const schedulerRef = useRef<RefreshScheduler | null>(null);
   const updateToken = useTokenStore((state) => state.updateToken);
 
   useEffect(() => {
-    const setNextPollAt = useTokenStore.getState().setNextPollAt;
-    const refresh = async (): Promise<void> => {
-      try {
-        await updateToken();
-      } catch {
-        // The store exposes the normalized error to the UI.
-      } finally {
-        setNextPollAt(Date.now() + refreshInterval * 1_000);
-      }
-    };
+    const scheduler = createRefreshScheduler({
+      intervalMs: refreshInterval * 1_000,
+      refresh: updateToken,
+      setNextPollAt: useTokenStore.getState().setNextPollAt,
+      visibility: documentVisibility,
+    });
+    schedulerRef.current = scheduler;
+    scheduler.start();
 
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), refreshInterval * 1_000);
     return () => {
-      window.clearInterval(timer);
-      setNextPollAt(null);
+      if (schedulerRef.current === scheduler) schedulerRef.current = null;
+      scheduler.stop();
     };
   }, [refreshInterval, updateToken]);
+
+  const requestRefresh = useCallback(
+    (): Promise<void> => schedulerRef.current?.refreshNow() ?? updateToken(),
+    [updateToken],
+  );
 
   useEffect(() => {
     const unsubscribe = window.electronAPI?.onViewChange((nextView) => {
@@ -60,7 +75,7 @@ const App = () => {
         <TokenPanel
           onClose={() => changeView('collapsed')}
           onQuit={() => window.electronAPI?.quitApp()}
-          onRefresh={() => void updateToken().catch(() => undefined)}
+          onRefresh={requestRefresh}
           onSettings={() => changeView('settings')}
         />
       </div>
@@ -73,6 +88,7 @@ const App = () => {
         <Settings
           refreshInterval={refreshInterval}
           onBack={() => changeView('collapsed')}
+          onRefresh={requestRefresh}
           onRefreshIntervalChange={setRefreshInterval}
         />
       </div>

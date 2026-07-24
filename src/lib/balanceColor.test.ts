@@ -24,9 +24,9 @@ describe('balance color helpers', () => {
       text: getBalanceTextClass(75),
       background: getBalanceRingBgClass(75),
     }).toEqual({
-      stroke: '#34d399',
-      text: 'text-emerald-300',
-      background: 'bg-emerald-500/15',
+      stroke: 'var(--balance-full)',
+      text: 'balance-text-full',
+      background: 'balance-surface-full',
     });
 
     expect({
@@ -34,9 +34,9 @@ describe('balance color helpers', () => {
       text: getBalanceTextClass(25),
       background: getBalanceRingBgClass(25),
     }).toEqual({
-      stroke: '#818cf8',
-      text: 'text-indigo-300',
-      background: 'bg-indigo-500/15',
+      stroke: 'var(--balance-mid)',
+      text: 'balance-text-mid',
+      background: 'balance-surface-mid',
     });
 
     expect({
@@ -44,9 +44,9 @@ describe('balance color helpers', () => {
       text: getBalanceTextClass(5),
       background: getBalanceRingBgClass(5),
     }).toEqual({
-      stroke: '#f87171',
-      text: 'text-rose-300',
-      background: 'bg-rose-500/15',
+      stroke: 'var(--balance-low)',
+      text: 'balance-text-low',
+      background: 'balance-surface-low',
     });
   });
 });
