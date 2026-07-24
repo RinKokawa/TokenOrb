@@ -52,6 +52,9 @@
   --status-mock: #a5b4fc;
   --status-unauthorized: #fb7185;
   --status-offline: #f59e0b;
+  --orb-bg: rgba(2, 6, 23, 0.82);
+  --orb-border: rgba(255, 255, 255, 0.15);
+  --accent-glow: rgba(99, 102, 241, 0.18);
 }
 
 :root[data-theme='light'] {
@@ -97,6 +100,87 @@
   --status-mock: #4f46e5;
   --status-unauthorized: #e11d48;
   --status-offline: #b45309;
+  --orb-bg: rgba(248, 250, 252, 0.92);
+  --orb-border: rgba(15, 23, 42, 0.16);
+  --accent-glow: rgba(79, 70, 229, 0.14);
+}
+
+:root[data-accent='gold'] {
+  --panel-accent-text: #f6c85f;
+  --panel-focus: #d4a72c;
+  --panel-primary: #b98516;
+  --panel-primary-hover: #d4a72c;
+  --balance-full: #f6c85f;
+  --balance-mid: #d4a72c;
+  --balance-full-surface: rgba(246, 200, 95, 0.18);
+  --balance-mid-surface: rgba(212, 167, 44, 0.16);
+  --status-mock: #f6c85f;
+  --orb-bg: rgba(28, 20, 6, 0.9);
+  --orb-border: rgba(246, 200, 95, 0.34);
+  --accent-glow: rgba(246, 200, 95, 0.28);
+}
+
+:root[data-accent='pink'] {
+  --panel-accent-text: #f9a8d4;
+  --panel-focus: #ec4899;
+  --panel-primary: #db2777;
+  --panel-primary-hover: #ec4899;
+  --balance-full: #f9a8d4;
+  --balance-mid: #f472b6;
+  --balance-full-surface: rgba(249, 168, 212, 0.18);
+  --balance-mid-surface: rgba(244, 114, 182, 0.16);
+  --status-mock: #f9a8d4;
+  --orb-bg: rgba(35, 10, 25, 0.9);
+  --orb-border: rgba(249, 168, 212, 0.32);
+  --accent-glow: rgba(236, 72, 153, 0.27);
+}
+
+:root[data-accent='ocean'] {
+  --panel-accent-text: #67e8f9;
+  --panel-focus: #06b6d4;
+  --panel-primary: #0891b2;
+  --panel-primary-hover: #06b6d4;
+  --balance-full: #5eead4;
+  --balance-mid: #22d3ee;
+  --balance-full-surface: rgba(94, 234, 212, 0.17);
+  --balance-mid-surface: rgba(34, 211, 238, 0.15);
+  --status-mock: #67e8f9;
+  --orb-bg: rgba(5, 24, 34, 0.9);
+  --orb-border: rgba(103, 232, 249, 0.3);
+  --accent-glow: rgba(34, 211, 238, 0.26);
+}
+
+:root[data-theme='light'][data-accent='gold'] {
+  --panel-accent-text: #8a5d00;
+  --panel-focus: #a66f00;
+  --panel-primary: #a66f00;
+  --panel-primary-hover: #815600;
+  --balance-full: #9a6700;
+  --balance-mid: #b77900;
+  --orb-bg: rgba(255, 250, 235, 0.95);
+  --orb-border: rgba(166, 111, 0, 0.28);
+}
+
+:root[data-theme='light'][data-accent='pink'] {
+  --panel-accent-text: #be185d;
+  --panel-focus: #db2777;
+  --panel-primary: #db2777;
+  --panel-primary-hover: #be185d;
+  --balance-full: #be185d;
+  --balance-mid: #db2777;
+  --orb-bg: rgba(255, 245, 250, 0.95);
+  --orb-border: rgba(219, 39, 119, 0.25);
+}
+
+:root[data-theme='light'][data-accent='ocean'] {
+  --panel-accent-text: #0e7490;
+  --panel-focus: #0891b2;
+  --panel-primary: #0891b2;
+  --panel-primary-hover: #0e7490;
+  --balance-full: #0f766e;
+  --balance-mid: #0891b2;
+  --orb-bg: rgba(240, 253, 255, 0.95);
+  --orb-border: rgba(8, 145, 178, 0.25);
 }
 
 * {
@@ -148,6 +232,7 @@ textarea {
   background: var(--panel-bg);
   box-shadow:
     0 24px 60px rgba(2, 6, 23, 0.34),
+    0 0 36px var(--accent-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(24px);
 }
@@ -365,9 +450,41 @@ textarea {
 
 .token-ball {
   --balance-ring-track: rgba(255, 255, 255, 0.12);
-  --balance-full: #34d399;
-  --balance-mid: #818cf8;
-  --balance-low: #f87171;
+  border-color: var(--orb-border);
+  background: var(--orb-bg);
+  box-shadow: 0 0 28px var(--accent-glow);
+}
+
+.appearance-accent-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.accent-swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  flex: none;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 999px;
+  box-shadow: 0 0 10px color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.accent-swatch-classic {
+  background: linear-gradient(135deg, #34d399, #818cf8);
+}
+
+.accent-swatch-gold {
+  background: linear-gradient(135deg, #fff0a6, #b77900);
+}
+
+.accent-swatch-pink {
+  background: linear-gradient(135deg, #fbcfe8, #db2777);
+}
+
+.accent-swatch-ocean {
+  background: linear-gradient(135deg, #99f6e4, #0891b2);
 }
 
 .status-dot-idle {

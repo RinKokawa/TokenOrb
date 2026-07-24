@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTokenStore } from '../store/tokenStore';
 import { normalizeRefreshError, type RefreshErrorCode } from '../lib/refreshReliability';
-import { getStoredTheme, setStoredTheme, type Theme } from '../lib/theme';
+import {
+  accentOptions,
+  getStoredAccent,
+  getStoredTheme,
+  setStoredAccent,
+  setStoredTheme,
+  type Accent,
+  type Theme,
+} from '../lib/theme';
 import { useT } from '../i18n';
 import type { ConfigSaveInput, PublicConfigStatus } from '../../electron/shared/token';
 
@@ -26,6 +34,7 @@ export const Settings = ({
   onRefreshIntervalChange,
 }: SettingsProps) => {
   const [theme, setTheme] = useState<Theme>(getStoredTheme);
+  const [accent, setAccent] = useState<Accent>(getStoredAccent);
   const snapshot = useTokenStore((state) => state.snapshot);
   const lastFetchedAt = useTokenStore((state) => state.lastFetchedAt);
   const status = useTokenStore((state) => state.status);
@@ -46,6 +55,10 @@ export const Settings = ({
   useEffect(() => {
     setStoredTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    setStoredAccent(accent);
+  }, [accent]);
 
   useEffect(() => {
     if (!isElectronApiAvailable() || !window.electronAPI?.getConfigStatus) return;
@@ -435,6 +448,26 @@ export const Settings = ({
                 onClick={() => setTheme(option)}
               >
                 {t(`settings.theme.${option}`)}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend className="panel-text-strong text-sm font-medium">{t('settings.accent')}</legend>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {accentOptions.map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={accent === option}
+                className={`panel-theme-button appearance-accent-option rounded-lg px-3 py-2 text-sm ${
+                  accent === option ? 'panel-theme-button-active' : ''
+                }`}
+                onClick={() => setAccent(option)}
+              >
+                <span className={`accent-swatch accent-swatch-${option}`} aria-hidden="true" />
+                {t(`settings.accent.${option}`)}
               </button>
             ))}
           </div>

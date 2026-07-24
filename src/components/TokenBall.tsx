@@ -126,7 +126,7 @@ export const TokenBall = ({ onOpen }: TokenBallProps) => {
       onPointerCancel={handlePointerUp}
     >
       <motion.div
-        className="token-ball relative flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-slate-950/75 text-white backdrop-blur-xl"
+        className="token-ball relative flex h-20 w-20 items-center justify-center rounded-full border text-white backdrop-blur-xl"
         animate={shouldReduceMotion ? { y: 0 } : { y: [0, -3, 0] }}
         transition={
           shouldReduceMotion
