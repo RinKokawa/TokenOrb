@@ -31,8 +31,9 @@ storage via Electron's `safeStorage`; nothing leaves the machine in plaintext.
   `_token` cookie value, or full `Cookie:` header into the OS keychain. Leaving a field
   empty keeps the existing value; clearing removes it. The renderer never sees the
   secrets after they are saved.
-- **Online / Mock / Offline behaviour** — if `MINIMAX_TOKEN` is missing, the UI falls back
-  to a deterministic mock so the panel still animates. Real failures are surfaced as
+- **Online / Offline behaviour** — if `MINIMAX_TOKEN` is missing or rejected, the panel
+  shows a "Credentials Missing" status dot rather than fabricating data. Real network
+  or response failures are surfaced as
   user-safe messages (`unauthorized`, `timeout`, `network`, `response`, `unknown`).
 - **Visibility-aware refresh** with exponential backoff (5 s → 60 s ceiling). Polling
   pauses when the document is hidden and queues a refresh on `visibilitychange`. Single
@@ -135,8 +136,7 @@ token-orb/
 │   │   ├── config.ts          # config:get / config:save handlers
 │   │   └── token.ts           # token:get / token:update / token:fetch handlers
 │   ├── shared/
-│   │   ├── token.ts           # IPC payload types + createMockTokenPlanSnapshot
-│   │   └── token.test.ts
+│   │   ├── token.ts           # IPC payload types + TokenNotConfiguredError
 │   ├── window/
 │   │   ├── geometry.ts        # drag/clamp math
 │   │   ├── persistence.ts     # position schema
@@ -153,7 +153,7 @@ token-orb/
 │   └── smoke-dump.mjs         # smoke test → dumps the raw snapshot as JSON
 ├── src/
 │   ├── api/
-│   │   └── token.ts           # renderer-side fetchTokenPlan + mock fallback
+│   │   └── token.ts           # renderer-side fetchTokenPlan (no mock fallback)
 │   ├── components/
 │   │   ├── TokenBall.tsx
 │   │   └── TokenPanel.tsx
@@ -312,8 +312,8 @@ Windows host; macOS DMG must be produced on macOS.
 | `MINIMAX_COOKIE`   | optional | Full `Cookie:` header — overrides the per-name values |
 
 When `MINIMAX_TOKEN` is unset (and no credential is saved in the OS keychain) the app
-falls back to a deterministic mock so the UI keeps animating. The panel surfaces a
-"Mock Data" status dot in that case.
+refuses to fabricate data; the panel surfaces a "Credentials Missing" status dot and
+the settings page explains how to provide a token.
 
 ## License
 

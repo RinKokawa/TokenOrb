@@ -10,7 +10,7 @@ import {
 } from '../window';
 import { loadRuntimeConfig, type RuntimeConfig } from '../config';
 import {
-  createMockTokenPlanSnapshot,
+  TokenNotConfiguredError,
   type TokenBalance,
   type TokenPlanSnapshot,
 } from '../shared/token';
@@ -18,12 +18,11 @@ import { fetchTokenPlan, InvalidResponseError, InvalidTokenError } from '../api/
 
 const initialBalance: TokenBalance = {
   totalPercent: 100,
-  usedPercent: 30,
-  remainingPercent: 70,
+  usedPercent: 0,
+  remainingPercent: 100,
 };
 
 let tokenBalance = initialBalance;
-let lastMockUpdate = Date.now();
 let runtimeConfig: RuntimeConfig | null = null;
 
 const isWindowState = (value: unknown): value is WindowState =>
@@ -47,32 +46,12 @@ const isTokenBalance = (value: unknown): value is TokenBalance => {
   );
 };
 
-const refreshMockBalance = (): TokenBalance => {
-  const now = Date.now();
-  const elapsedIntervals = Math.floor((now - lastMockUpdate) / 15_000);
-
-  if (elapsedIntervals > 0) {
-    const usedPercent = Math.min(
-      tokenBalance.totalPercent,
-      tokenBalance.usedPercent + elapsedIntervals * 0.0137,
-    );
-    tokenBalance = {
-      totalPercent: tokenBalance.totalPercent,
-      usedPercent,
-      remainingPercent: tokenBalance.totalPercent - usedPercent,
-    };
-    lastMockUpdate = now;
-  }
-
-  return tokenBalance;
-};
-
 export const setRuntimeConfig = (config: RuntimeConfig): void => {
   runtimeConfig = config;
 };
 
 export const registerTokenIpc = (): void => {
-  ipcMain.handle('token:get', () => refreshMockBalance());
+  ipcMain.handle('token:get', () => tokenBalance);
 
   ipcMain.handle('token:update', (_event, value: unknown) => {
     if (!isTokenBalance(value)) {
@@ -80,15 +59,15 @@ export const registerTokenIpc = (): void => {
     }
 
     tokenBalance = value;
-    lastMockUpdate = Date.now();
     return tokenBalance;
   });
 
-  ipcMain.handle('token:fetch', async (): Promise<TokenPlanSnapshot | null> => {
+  ipcMain.handle('token:fetch', async (): Promise<TokenPlanSnapshot> => {
     const config = runtimeConfig ?? loadRuntimeConfig();
     if (!config.token) {
-      console.warn('[token:fetch] MINIMAX_TOKEN is not configured; using mock balance');
-      return createMockTokenPlanSnapshot();
+      throw new TokenNotConfiguredError(
+        'MINIMAX_TOKEN is not configured; open Settings to add credentials.',
+      );
     }
 
     try {

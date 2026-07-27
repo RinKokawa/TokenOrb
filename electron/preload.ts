@@ -14,7 +14,7 @@ const electronApi: ElectronApi = {
   getTokenBalance: (): Promise<TokenBalance> => ipcRenderer.invoke('token:get'),
   updateTokenBalance: (value: TokenBalance): Promise<TokenBalance> =>
     ipcRenderer.invoke('token:update', value),
-  fetchTokenPlan: (): Promise<TokenPlanSnapshot | null> => ipcRenderer.invoke('token:fetch'),
+  fetchTokenPlan: (): Promise<TokenPlanSnapshot> => ipcRenderer.invoke('token:fetch'),
   getConfigStatus: (): Promise<PublicConfigStatus> => {
     return ipcRenderer.invoke('config:get');
   },

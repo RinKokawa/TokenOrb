@@ -30,13 +30,12 @@ const formatTimestamp = (timestamp: number | null): string => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-type StatusKey = 'idle' | 'loading' | 'online' | 'mock' | 'unauthorized' | 'offline';
+type StatusKey = 'idle' | 'loading' | 'online' | 'unauthorized' | 'offline';
 
 const statusDotMap: Record<StatusKey, string> = {
   idle: 'status-dot-idle',
   loading: 'status-dot-loading',
   online: 'status-dot-online',
-  mock: 'status-dot-mock',
   unauthorized: 'status-dot-unauthorized',
   offline: 'status-dot-offline',
 };
@@ -44,8 +43,17 @@ const statusDotMap: Record<StatusKey, string> = {
 const langOptions: Lang[] = ['en', 'zh'];
 
 export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPanelProps) => {
-  const { snapshot, percentage, totalPercent, isLoading, lastFetchedAt, status, error, errorCode } =
-    useTokenStore();
+  const {
+    snapshot,
+    percentage,
+    totalPercent,
+    isLoading,
+    lastFetchedAt,
+    quotaResetAt,
+    status,
+    error,
+    errorCode,
+  } = useTokenStore();
   const t = useT();
   const shouldReduceMotion = useReducedMotion();
   const [refreshFeedback, setRefreshFeedback] = useState<ManualRefreshFeedback>(null);
@@ -227,6 +235,10 @@ export const TokenPanel = ({ onClose, onQuit, onRefresh, onSettings }: TokenPane
 
       <div className="panel-surface mt-4 rounded-xl p-3 text-[11px] leading-relaxed">
         <div className="flex items-center justify-between">
+          <span className="panel-muted">{t('panel.nextReset')}</span>
+          <span className="panel-text-strong font-medium">{formatTimestamp(quotaResetAt)}</span>
+        </div>
+        <div className="mt-1 flex items-center justify-between">
           <span className="panel-muted">{t('panel.lastFetched')}</span>
           <span className="panel-text-strong font-medium">{formatTimestamp(lastFetchedAt)}</span>
         </div>

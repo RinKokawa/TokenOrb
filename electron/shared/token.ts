@@ -13,6 +13,9 @@ export interface TokenPlanModel {
   resetAt: number;
 }
 
+export const isTokenNotConfiguredError = (error: unknown): error is TokenNotConfiguredError =>
+  error instanceof TokenNotConfiguredError;
+
 export interface TokenPlanSnapshot {
   fetchedAt: number;
   baseUrl: string;
@@ -47,7 +50,7 @@ export type ConfigSaveResult =
 export interface ElectronApi {
   getTokenBalance: () => Promise<TokenBalance>;
   updateTokenBalance: (balance: TokenBalance) => Promise<TokenBalance>;
-  fetchTokenPlan: () => Promise<TokenPlanSnapshot | null>;
+  fetchTokenPlan: () => Promise<TokenPlanSnapshot>;
   getConfigStatus: () => Promise<PublicConfigStatus>;
   saveConfig: (input: ConfigSaveInput) => Promise<ConfigSaveResult>;
   setWindowState: (state: WindowState) => Promise<WindowState>;
@@ -61,20 +64,9 @@ export interface ElectronApi {
   onViewChange: (listener: WindowViewListener) => () => void;
 }
 
-export const createMockTokenPlanSnapshot = (fetchedAt = Date.now()): TokenPlanSnapshot => {
-  const primary: TokenPlanModel = {
-    model: 'general',
-    usedPercent: 30,
-    remainingPercent: 70,
-    weeklyUsedPercent: 12,
-    totalPercent: 100,
-    resetAt: 0,
-  };
-
-  return {
-    fetchedAt,
-    baseUrl: 'mock://',
-    models: [primary],
-    primary,
-  };
-};
+export class TokenNotConfiguredError extends Error {
+  constructor(message = 'MiniMax credentials are not configured') {
+    super(message);
+    this.name = 'TokenNotConfiguredError';
+  }
+}

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   fetchTokenPlan,
+  isTokenNotConfiguredError,
   type TokenBalance,
   type TokenPlanSnapshot,
   type TokenStatus,
@@ -51,11 +52,16 @@ export const useTokenStore = create<TokenState>((set) => {
         percentage,
         lastFetchedAt: snapshot.fetchedAt,
         quotaResetAt: primary?.resetAt || null,
-        status: snapshot.baseUrl.startsWith('mock://') ? 'mock' : 'online',
+        status: 'online',
       });
     } catch (error: unknown) {
+      const status: TokenStatus = isTokenNotConfiguredError(error) ? 'unauthorized' : 'offline';
       const normalized = normalizeRefreshError(error);
-      set({ status: normalized.status, error: normalized.message, errorCode: normalized.code });
+      set({
+        status,
+        error: normalized.message,
+        errorCode: isTokenNotConfiguredError(error) ? null : normalized.code,
+      });
       throw normalized;
     } finally {
       set({ isLoading: false });

@@ -49,7 +49,6 @@
   --status-idle: #94a3b8;
   --status-loading: #fcd34d;
   --status-online: #34d399;
-  --status-mock: #a5b4fc;
   --status-unauthorized: #fb7185;
   --status-offline: #f59e0b;
   --orb-bg: rgba(2, 6, 23, 0.82);
@@ -97,7 +96,6 @@
   --status-idle: #64748b;
   --status-loading: #b45309;
   --status-online: #059669;
-  --status-mock: #4f46e5;
   --status-unauthorized: #e11d48;
   --status-offline: #b45309;
   --orb-bg: rgba(248, 250, 252, 0.92);
@@ -114,7 +112,6 @@
   --balance-mid: #d4a72c;
   --balance-full-surface: rgba(246, 200, 95, 0.18);
   --balance-mid-surface: rgba(212, 167, 44, 0.16);
-  --status-mock: #f6c85f;
   --orb-bg: rgba(28, 20, 6, 0.9);
   --orb-border: rgba(246, 200, 95, 0.34);
   --accent-glow: rgba(246, 200, 95, 0.28);
@@ -129,7 +126,6 @@
   --balance-mid: #f472b6;
   --balance-full-surface: rgba(249, 168, 212, 0.18);
   --balance-mid-surface: rgba(244, 114, 182, 0.16);
-  --status-mock: #f9a8d4;
   --orb-bg: rgba(35, 10, 25, 0.9);
   --orb-border: rgba(249, 168, 212, 0.32);
   --accent-glow: rgba(236, 72, 153, 0.27);
@@ -144,7 +140,6 @@
   --balance-mid: #22d3ee;
   --balance-full-surface: rgba(94, 234, 212, 0.17);
   --balance-mid-surface: rgba(34, 211, 238, 0.15);
-  --status-mock: #67e8f9;
   --orb-bg: rgba(5, 24, 34, 0.9);
   --orb-border: rgba(103, 232, 249, 0.3);
   --accent-glow: rgba(34, 211, 238, 0.26);
@@ -498,10 +493,6 @@ textarea {
 .status-dot-online {
   background: var(--status-online);
   box-shadow: 0 0 10px color-mix(in srgb, var(--status-online) 80%, transparent);
-}
-
-.status-dot-mock {
-  background: var(--status-mock);
 }
 
 .status-dot-unauthorized {

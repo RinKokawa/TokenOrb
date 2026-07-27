@@ -1,33 +1,22 @@
 import {
-  createMockTokenPlanSnapshot,
+  TokenNotConfiguredError,
+  isTokenNotConfiguredError,
   type TokenBalance,
   type TokenPlanSnapshot,
 } from '../../electron/shared/token';
 
 export type { TokenBalance, TokenPlanModel, TokenPlanSnapshot } from '../../electron/shared/token';
 
-export type TokenStatus = 'idle' | 'loading' | 'online' | 'mock' | 'unauthorized' | 'offline';
+export { isTokenNotConfiguredError };
 
-const mockStartedAt = Date.now();
-const mockTotalPercent = 100;
-
-const getMockTokenBalance = (): TokenBalance => {
-  const elapsedIntervals = Math.floor((Date.now() - mockStartedAt) / 15_000);
-  const usedPercent = Math.min(mockTotalPercent, 30 + elapsedIntervals * 0.0137);
-
-  return {
-    totalPercent: mockTotalPercent,
-    usedPercent,
-    remainingPercent: mockTotalPercent - usedPercent,
-  };
-};
+export type TokenStatus = 'idle' | 'loading' | 'online' | 'unauthorized' | 'offline';
 
 export const getTokenBalance = async (): Promise<TokenBalance> => {
   if (window.electronAPI) {
     return window.electronAPI.getTokenBalance();
   }
 
-  return getMockTokenBalance();
+  throw new TokenNotConfiguredError('Electron API is not available');
 };
 
 export const updateTokenBalance = async (balance: TokenBalance): Promise<TokenBalance> => {
@@ -40,13 +29,8 @@ export const updateTokenBalance = async (balance: TokenBalance): Promise<TokenBa
 
 export const fetchTokenPlan = async (): Promise<TokenPlanSnapshot> => {
   if (!window.electronAPI) {
-    return createMockTokenPlanSnapshot();
+    throw new TokenNotConfiguredError('Electron API is not available');
   }
 
-  const snapshot = await window.electronAPI.fetchTokenPlan();
-  if (snapshot) return snapshot;
-
-  // When MINIMAX_TOKEN is not configured, fall back to a deterministic mock
-  // so the UI still animates and the mock source of truth can be observed.
-  return createMockTokenPlanSnapshot();
+  return window.electronAPI.fetchTokenPlan();
 };

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { app } from 'electron';
+import { resolvePackagedEnvPath } from './config/env';
 import { CONFIG_DEFAULT_BASE_URL, type PersistedConfig } from './config/persistence';
 import {
   decryptPersistedConfig,
@@ -38,7 +39,10 @@ const loadEnvFallback = (): Pick<
 > => {
   if (cachedEnvConfig) return cachedEnvConfig;
   if (app.isPackaged) {
-    dotenv.config({ path: path.join(process.resourcesPath, '.env'), override: false });
+    dotenv.config({
+      path: resolvePackagedEnvPath(process.resourcesPath, process.env.PORTABLE_EXECUTABLE_DIR),
+      override: false,
+    });
   }
   cachedEnvConfig = {
     baseUrl: readEnvValue('MINIMAX_BASE_URL') ?? CONFIG_DEFAULT_BASE_URL,
