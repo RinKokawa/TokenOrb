@@ -567,4 +567,76 @@ describe('fetchTokenPlan real official endpoint behavior', () => {
     const headers = fetchCalls[0]!.init.headers as Record<string, string>;
     expect(headers['Cookie']).toBe(`_token=${SAFE_TOKEN}; minimax_group_id_v2=${SAFE_GROUP_ID}`);
   });
+
+  it('sends x-group-id header when groupId is provided', async () => {
+    mock = installFetchMock(async () =>
+      jsonResponse(200, {
+        model_remains: [
+          {
+            model_name: 'general',
+            current_interval_used_percent: 1,
+            current_interval_total_percent: 100,
+            end_time: 1_750_000_000_000,
+          },
+        ],
+      }),
+    );
+
+    await fetchTokenPlan({
+      baseUrl: OFFICIAL_BASE_URL,
+      token: SAFE_TOKEN,
+      groupId: SAFE_GROUP_ID,
+    });
+
+    const headers = fetchCalls[0]!.init.headers as Record<string, string>;
+    expect(headers['x-group-id']).toBe(SAFE_GROUP_ID);
+  });
+
+  it('omits x-group-id header when groupId is null', async () => {
+    mock = installFetchMock(async () =>
+      jsonResponse(200, {
+        model_remains: [
+          {
+            model_name: 'general',
+            current_interval_used_percent: 1,
+            current_interval_total_percent: 100,
+            end_time: 1_750_000_000_000,
+          },
+        ],
+      }),
+    );
+
+    await fetchTokenPlan({
+      baseUrl: OFFICIAL_BASE_URL,
+      token: SAFE_TOKEN,
+      groupId: null,
+    });
+
+    const headers = fetchCalls[0]!.init.headers as Record<string, string>;
+    expect(headers['x-group-id']).toBeUndefined();
+  });
+
+  it('uses an Edge 151 user agent string', async () => {
+    mock = installFetchMock(async () =>
+      jsonResponse(200, {
+        model_remains: [
+          {
+            model_name: 'general',
+            current_interval_used_percent: 1,
+            current_interval_total_percent: 100,
+            end_time: 1_750_000_000_000,
+          },
+        ],
+      }),
+    );
+
+    await fetchTokenPlan({
+      baseUrl: OFFICIAL_BASE_URL,
+      token: SAFE_TOKEN,
+      groupId: SAFE_GROUP_ID,
+    });
+
+    const headers = fetchCalls[0]!.init.headers as Record<string, string>;
+    expect(headers['User-Agent']).toMatch(/Edg\/151/);
+  });
 });

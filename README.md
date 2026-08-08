@@ -70,6 +70,7 @@ by sending:
 
 ```
 Cookie: _token=<MINIMAX_TOKEN>; minimax_group_id_v2=<MINIMAX_GROUP_ID>
+x-group-id: <MINIMAX_GROUP_ID>
 Origin: https://platform.minimaxi.com
 Referer: https://platform.minimaxi.com/
 User-Agent: <desktop Chrome / Edge UA>

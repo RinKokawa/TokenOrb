@@ -19,11 +19,22 @@ type RawModelRemains = {
   model_name?: unknown;
   start_time?: unknown;
   end_time?: unknown;
+  remains_time?: unknown;
+  current_interval_total_count?: unknown;
+  current_interval_used_count?: unknown;
+  current_interval_remains_count?: unknown;
   current_interval_used_percent?: unknown;
   current_interval_total_percent?: unknown;
+  current_interval_status?: unknown;
   weekly_start_time?: unknown;
   weekly_end_time?: unknown;
+  weekly_remains_time?: unknown;
+  current_weekly_total_count?: unknown;
+  current_weekly_used_count?: unknown;
+  current_weekly_remains_count?: unknown;
   current_weekly_used_percent?: unknown;
+  current_weekly_total_percent?: unknown;
+  current_weekly_status?: unknown;
   base_resp?: unknown;
 };
 
@@ -34,12 +45,13 @@ type RawResponse = {
 
 const REQUEST_TIMEOUT_MS = 8_000;
 const DEFAULT_USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0';
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0';
 const BROWSER_ORIGIN = 'https://platform.minimaxi.com';
 const BROWSER_REFERER = 'https://platform.minimaxi.com/';
 const ACCEPT_LANGUAGE = 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6';
 const TOKEN_COOKIE_NAME = '_token';
 const GROUP_COOKIE_NAME = 'minimax_group_id_v2';
+const GROUP_ID_HEADER_NAME = 'x-group-id';
 const TOKEN_PLAN_PATH = '/backend/account/token_plan/remains_percent';
 
 const SAFE_NETWORK_MESSAGE = 'MiniMax request failed';
@@ -211,7 +223,7 @@ export const fetchTokenPlan = async (input: FetchTokenPlanInput): Promise<TokenP
     Origin: BROWSER_ORIGIN,
     Referer: BROWSER_REFERER,
     'User-Agent': DEFAULT_USER_AGENT,
-    'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Microsoft Edge";v="150"',
+    'sec-ch-ua': '"Not;A=Brand";v="99", "Microsoft Edge";v="151", "Chromium";v="151"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
     'sec-fetch-dest': 'empty',
@@ -220,6 +232,9 @@ export const fetchTokenPlan = async (input: FetchTokenPlanInput): Promise<TokenP
     'Cache-Control': 'no-cache',
     Pragma: 'no-cache',
   };
+  if (input.groupId) {
+    headers[GROUP_ID_HEADER_NAME] = input.groupId;
+  }
 
   let response: Response;
   try {
