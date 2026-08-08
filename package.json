@@ -1,6 +1,6 @@
 {
   "name": "token-orb",
-  "version": "0.1.0",
+  "version": "2026.08.08",
   "private": true,
   "description": "A lightweight, always-on-top desktop orb that shows your AI token balance in real time.",
   "author": "TokenOrb Contributors",
@@ -18,6 +18,7 @@
     "smoke:dump": "node scripts/smoke-dump.mjs",
     "dist": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder",
     "dist:win": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder --win nsis",
+    "dist:win:portable": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder --win portable",
     "dist:mac": "eslint . && tsc -b && vite build && tsc -p tsconfig.electron.json && electron-builder --mac dmg"
   },
   "engines": {

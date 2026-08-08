@@ -14,11 +14,16 @@ win:
     - target: nsis
       arch:
         - x64
+    - target: portable
+      arch:
+        - x64
   icon: build/icon.png
 nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}
 mac:
   target:
     - target: dmg
